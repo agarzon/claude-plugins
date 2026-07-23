@@ -25,8 +25,9 @@ next session.
 ## Contents
 
 - **`handoff`** (skill) — display a handoff summary to carry work into the next session.
-- **`Agarzon Material Dark`** (theme) — Material-dark palette. Select via `/theme`;
-  `Ctrl+E` copies it to `~/.claude/themes/` for local tweaking. Experimental CC
-  feature — declared as `experimental.themes` in `plugin.json`.
+- **`Agarzon Modarin`** (theme) — port of Midnight Commander's `modarin256`
+  palette (neutral grey base, teal accents). Select via `/theme`; `Ctrl+E` copies
+  it to `~/.claude/themes/` for local tweaking. Experimental CC feature — declared
+  as `experimental.themes` in `plugin.json`.
 
 See [`docs/design.md`](docs/design.md) for the full design and rationale.
