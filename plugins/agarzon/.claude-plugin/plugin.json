@@ -1,0 +1,11 @@
+{
+  "name": "agarzon",
+  "version": "0.1.0",
+  "description": "Personal Claude Code skills and workflow extensions.",
+  "author": {
+    "name": "Alexander Garzon"
+  },
+  "repository": "https://github.com/agarzon/claude-plugins",
+  "license": "MIT",
+  "keywords": ["claude-code", "skills", "handoff", "personal"]
+}

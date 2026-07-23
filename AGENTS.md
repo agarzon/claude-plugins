@@ -7,14 +7,15 @@ replacing ad-hoc chezmoi/loose-file distribution.
 
 ## Status
 
-Design approved and written. **Implementation not started.** The repo currently
-contains only the design doc and this file.
+Design approved and implemented. Marketplace `claude-plugins` → plugin `agarzon`
+→ skill `handoff` are scaffolded and published. Remaining per-machine steps
+(install, `autoUpdate` flip, loose-copy cleanup, M3/M2 rollout, toolbox register
+#25) are tracked in the `docs/design.md` checklist.
 
-## Next session: finish the job
+## Reference
 
-Read `docs/design.md` — it holds the locked decisions, the exact file contents to
-scaffold, and a numbered **implementation checklist** with verify steps. Execute
-that checklist.
+Read `docs/design.md` for the locked decisions, file contents, and the numbered
+**implementation checklist** with verify steps.
 
 Quick map (all detail in `docs/design.md`):
 
