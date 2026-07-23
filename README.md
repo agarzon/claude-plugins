@@ -9,10 +9,10 @@ machines via Claude Code's native `autoUpdate`.
 
 ```sh
 claude plugin marketplace add agarzon/claude-plugins
-claude plugin install agarzon@claude-plugins
+claude plugin install agarzon@agarzon-plugins
 ```
 
-Set `autoUpdate: true` for the `claude-plugins` entry in
+Set `autoUpdate: true` for the `agarzon-plugins` entry in
 `~/.claude/plugins/known_marketplaces.json` so machines pull new skills on the
 next session.
 

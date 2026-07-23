@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "claude-plugins",
+  "name": "agarzon-plugins",
   "description": "Alexander Garzon's personal Claude Code plugins.",
   "owner": {
     "name": "Alexander Garzon"

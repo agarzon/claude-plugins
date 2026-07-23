@@ -23,7 +23,7 @@ distribution at all**. This repo fixes that.
 | ---------------- | ---------------------------------- |
 | Repo visibility  | **public**                         |
 | GitHub repo      | `agarzon/claude-plugins`           |
-| Marketplace name | `claude-plugins`                   |
+| Marketplace name | `agarzon-plugins` (was `claude-plugins`; CC now rejects any marketplace name containing "claude" as impersonation — discovered at install 2026-07-23. Repo stays `agarzon/claude-plugins`.) |
 | Structure        | one plugin, many skills            |
 | Plugin name      | `agarzon` (generic, artifact-agnostic — not `-skills`, because a plugin can also hold commands/hooks/agents/MCP) |
 | First skill      | `handoff` → `handoff@agarzon`      |
@@ -36,7 +36,7 @@ distribution at all**. This repo fixes that.
 ```
 agarzon/claude-plugins/                 (public GitHub repo)
 ├── .claude-plugin/
-│   └── marketplace.json                # marketplace "claude-plugins", lists 1 plugin
+│   └── marketplace.json                # marketplace "agarzon-plugins", lists 1 plugin
 ├── plugins/
 │   └── agarzon/
 │       ├── .claude-plugin/
@@ -62,7 +62,7 @@ official directory uses `"./plugins/agent-sdk-dev"`).
 ```json
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "claude-plugins",
+  "name": "agarzon-plugins",
   "description": "Alexander Garzon's personal Claude Code plugins.",
   "owner": {
     "name": "Alexander Garzon"
@@ -128,13 +128,13 @@ MIT, "Alexander Garzon", year 2026.
    → verify: `gh repo view agarzon/claude-plugins` shows public; anonymous
      `git clone https://github.com/agarzon/claude-plugins /tmp/…` succeeds.
 4. Install on M1: `claude plugin marketplace add agarzon/claude-plugins`
-   then `claude plugin install agarzon@claude-plugins`.
+   then `claude plugin install agarzon@agarzon-plugins`.
    → verify: `claude plugin list` shows `agarzon` installed **and enabled**.
-5. Set `autoUpdate: true` for the `claude-plugins` entry in
+5. Set `autoUpdate: true` for the `agarzon-plugins` entry in
    `~/.claude/plugins/known_marketplaces.json` (standing rule — all marketplaces
    autoUpdate:true). Back up first; run the autoUpdate sweep AFTER install (install
    rewrites known_marketplaces.json).
-   → verify: `jq '."claude-plugins".autoUpdate' known_marketplaces.json` → `true`.
+   → verify: `jq '."agarzon-plugins".autoUpdate' known_marketplaces.json` → `true`.
 6. Verify `handoff` resolves from the plugin (invoke `/handoff`).
 7. **Migration cleanup:** remove the loose copy so exactly one `handoff` skill
    exists — `rm -rf ~/.claude/skills/handoff` (user runs this; the catastrophic
@@ -150,7 +150,7 @@ MIT, "Alexander Garzon", year 2026.
 
 - `claude plugin list` shows `agarzon` installed and enabled on M1.
 - Invoking `/handoff` produces a summary (loaded from the plugin).
-- `known_marketplaces.json` has `claude-plugins` with `autoUpdate: true`.
+- `known_marketplaces.json` has `agarzon-plugins` with `autoUpdate: true`.
 - Exactly one `handoff` skill (loose copy removed).
 - Repo public and anonymously clonable.
 
