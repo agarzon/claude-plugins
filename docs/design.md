@@ -156,6 +156,7 @@ MIT, "Alexander Garzon", year 2026.
 
 ## Scope guards (YAGNI)
 
-- One plugin; no commands/hooks/agents/MCP yet — add when a real need appears.
+- One plugin; no commands/agents/MCP yet — add when a real need appears. Hooks
+  arrived in 0.3.0 for claude-mem sync, which is the "real need appeared" case.
 - No CI, no version automation, no tests. `version` bumped by hand.
 - `handoff` SKILL.md content is NOT rewritten — pure lift-and-shift.
