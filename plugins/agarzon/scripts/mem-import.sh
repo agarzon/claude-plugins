@@ -37,6 +37,38 @@ URL="http://127.0.0.1:${PORT}/api/import"
 curl -sf "http://127.0.0.1:${PORT}/api/stats" >/dev/null \
   || { echo "worker not responding on ${PORT}" >&2; exit 1; }
 
+TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
+
+# Relink resumed sessions. claude-mem issues a NEW memory_session_id when a session
+# resumes, keeping the same content_session_id. The peer publishes the new id; we
+# already hold a row with that content_session_id under the OLD one, and
+# sdk_sessions is UNIQUE on (platform_source, content_session_id) — so the session
+# insert is silently skipped, every summary/observation FK-ing the new id fails,
+# and the batch rolls back on every retry, forever. Rewrite incoming ids to ours.
+DB="${CLAUDE_MEM_DB:-$HOME/.claude-mem/claude-mem.db}"
+if command -v sqlite3 >/dev/null 2>&1 && [ -f "$DB" ]; then
+  sqlite3 -noheader -separator "$(printf '\t')" "file:${DB}?mode=ro" \
+    'SELECT content_session_id, memory_session_id FROM sdk_sessions
+      WHERE memory_session_id IS NOT NULL;' > "$TMP/local.tsv" 2>/dev/null \
+    || : > "$TMP/local.tsv"
+  if jq --rawfile local "$TMP/local.tsv" '
+        ($local | split("\n") | map(select(length > 0) | split("\t"))
+                | map({key: .[0], value: .[1]}) | from_entries) as $bycontent
+      | ([ .sessions[]
+           | select(($bycontent[.content_session_id] // .memory_session_id)
+                    != .memory_session_id)
+           | {key: .memory_session_id, value: $bycontent[.content_session_id]} ]
+         | from_entries) as $ren
+      | def relink: map(.memory_session_id |= ($ren[.] // .));
+        .sessions |= relink | .summaries |= relink | .observations |= relink
+      ' "$FILE" > "$TMP/relinked.json"; then
+    n_ren=$(jq -n --slurpfile a "$FILE" --slurpfile b "$TMP/relinked.json" \
+      '[$a[0].sessions[].memory_session_id] - [$b[0].sessions[].memory_session_id] | length')
+    [ "$n_ren" = "0" ] || echo "relinked ${n_ren} resumed session(s) to local ids"
+    FILE="$TMP/relinked.json"
+  fi
+fi
+
 n_sess=$(jq '.sessions|length'     "$FILE")
 n_sums=$(jq '.summaries|length'    "$FILE")
 n_obs=$(jq  '.observations|length' "$FILE")
@@ -50,7 +82,6 @@ if [ "$DRY" = "1" ]; then
   exit 0
 fi
 
-TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 TOTAL_I=0; TOTAL_S=0
 
 post() { # $1 = file holding a full payload object

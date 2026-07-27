@@ -44,8 +44,16 @@ These hooks close that gap without a server.
 |---|---|
 | `hooks/hooks.json` | `SessionStart` → import peers · `Stop` → publish own new rows |
 | `scripts/mem-sync.sh` | the hook entry point: `export` \| `import` |
-| `scripts/mem-export.sh` | DB → `/api/import` payload. `--since <epoch>` for incremental, `--remap old=new` to fix misfiled project attribution |
+| `scripts/mem-export.sh` | DB → `/api/import` payload. `--since <epoch>` for incremental |
 | `scripts/mem-import.sh` | chunked, ordered, resumable import. `--dry-run` does an FK check without sending |
+
+A resumed session keeps its `content_session_id` but gets a **new**
+`memory_session_id`, while `sdk_sessions` is unique on `content_session_id` — so a
+peer's version of a session you already hold is dropped as a duplicate and its
+summaries then fail the foreign key, jamming that peer's import permanently.
+`mem-import.sh` rewrites incoming session ids to the local ones before posting.
+Each side relinks on the way in, so the two machines disagreeing about the label
+is harmless. `--dry-run` cannot catch this: its FK check is payload-internal.
 
 Data travels as JSON in `~/General/claude-mem-sync/<device>.json` over
 [Syncthing](https://syncthing.net/) — **never git**, this repo is public. Set
