@@ -37,8 +37,38 @@ DEVICE="${CLAUDE_MEM_CLOUD_SYNC_DEVICE_NAME:-}"
 
 MINE="$SHARED/${DEVICE}.json"
 
+# Daily cold snapshot. The real threat is not sync drift — it is a destructive
+# auto-update migration: claude-mem 12.4.3 emptied ALEX-OFFICE outright, and the
+# only reason the corpus survived was that other machines held independent copies.
+# Date-stamped filename IS the once-a-day guard; no cron, launchd or systemd.
+#
+# ponytail: local-only and keeps 7. Covers a bad migration, NOT a dead disk —
+# point CLAUDE_MEM_SNAPSHOT_DIR at ~/General if off-machine copies ever matter
+# (costs ~22MB per machine per day of Syncthing traffic, which is why it doesn't
+# by default).
+snapshot() {
+  local dir snap
+  dir="${CLAUDE_MEM_SNAPSHOT_DIR:-$STATE/snapshots}"
+  snap="$dir/$DEVICE-$(date +%F).db"
+  [ -f "$snap" ] && return 0            # already taken today
+  mkdir -p "$dir" 2>/dev/null || return 0
+  # .backup, not cp — WAL-mode DB with a live worker; a plain copy can tear.
+  if sqlite3 "$STATE/claude-mem.db" ".backup '$snap'" 2>>"$LOG"; then
+    log "snapshot: $snap"
+  else
+    rm -f "$snap"; log "snapshot: FAILED (non-fatal)"; return 0
+  fi
+  # keep the 7 most recent for this device; never touches Phase 0 artifacts,
+  # which live in ~/General/claude-mem-backups, not here.
+  ls -t "$dir/$DEVICE"-*.db 2>/dev/null | tail -n +8 | while read -r old; do
+    rm -f "$old"
+  done
+  return 0
+}
+
 case "${1:-}" in
   export)
+    snapshot
     SINCE=$(cat "$MARK" 2>/dev/null || echo 0)
     case "$SINCE" in ''|*[!0-9]*) SINCE=0 ;; esac
     NOW=$(date +%s000)
