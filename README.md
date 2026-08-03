@@ -27,12 +27,44 @@ Step 2 is not optional — without a version bump nothing propagates.
 ## Contents
 
 - **`handoff`** (skill) — display a handoff summary to carry work into the next session.
+- **`skills-used`** (skill) — list the skills invoked in the current session, with counts. See below.
 - **claude-mem sync** (hooks + scripts) — keeps [claude-mem](https://github.com/thedotmack/claude-mem)
   memory in step across machines. See below.
 - **`Agarzon Modarin`** (theme) — port of Midnight Commander's `modarin256`
   palette (neutral grey base, teal accents). Select via `/theme`; `Ctrl+E` copies
   it to `~/.claude/themes/` for local tweaking. Experimental CC feature — declared
   as `experimental.themes` in `plugin.json`.
+
+## skills-used
+
+`/skills-used` reports which skills have been invoked in the current session and
+how many times each. It reads the session transcript
+(`~/.claude/projects/<cwd with "/" replaced by "-">/<session-uuid>.jsonl`)
+via `scripts/skills-used.sh` — no hook, no state file, nothing to keep in sync,
+because Claude Code already records every `Skill` tool call there.
+
+**The count is the point.** Measured on CC 2.1.220: a skill's `SKILL.md` body is
+not delivered in the `Skill` tool result (that is a 22-char `Launching skill: x`
+stub) but as a separate injected user message. Re-invoking a skill inside one
+process does **not** re-inject it — the second call gets
+`Skill /name is already loaded above; instructions unchanged.` — so a repeat
+invocation costs ~50 tokens, not the body.
+
+That dedupe state lives in process memory, not in the transcript. A `--resume`
+loses it, so the first re-invocation after resuming injects the whole body a
+second time and both copies then sit in context. Resume alone injects nothing;
+it takes a re-invocation. A count above 1 in `/skills-used` is exactly that
+duplicate, and it is otherwise invisible.
+
+Two gotchas encoded in the script, both learned the hard way:
+
+- Typed `/commands` land in entries with `.type == "system"`, while `Skill` tool
+  calls land in assistant `content[]`. Do not grep the raw file for
+  `<command-name>` — assistant messages that merely quote the tag match too.
+- `allowed-tools` in a skill's frontmatter is a **command**-only key; adding it
+  to a `SKILL.md` makes the skill fail to load with `Execute skill: <name>`.
+
+Run `scripts/skills-used.sh --selftest` to check the parsing against a fixture.
 
 ## claude-mem sync
 
