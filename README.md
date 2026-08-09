@@ -2,7 +2,8 @@
 
 Alexander Garzon's personal [Claude Code](https://docs.claude.com/en/docs/claude-code)
 plugin marketplace. A public GitHub repo that doubles as a CC marketplace,
-distributing custom skills, hooks and themes (and later commands/agents/MCP)
+distributing custom skills, hooks, themes and output styles (and later
+commands/agents/MCP)
 across all machines via Claude Code's native `autoUpdate`.
 
 ## Install
@@ -16,9 +17,10 @@ Set `autoUpdate: true` for the `agarzon-plugins` entry in
 `~/.claude/plugins/known_marketplaces.json` so machines pull new skills on the
 next session.
 
-## Add a skill, hook, or theme
+## Add a skill, hook, theme, or output style
 
-1. Drop `plugins/agarzon/skills/<name>/SKILL.md` (or edit `hooks/hooks.json`).
+1. Drop `plugins/agarzon/skills/<name>/SKILL.md` (or `output-styles/<name>.md`,
+   or edit `hooks/hooks.json`).
 2. Bump `version` in `plugins/agarzon/.claude-plugin/plugin.json`.
 3. Commit and push. Machines with `autoUpdate` pull it on the next session.
 
@@ -34,6 +36,9 @@ Step 2 is not optional — without a version bump nothing propagates.
   palette (neutral grey base, teal accents). Select via `/theme`; `Ctrl+E` copies
   it to `~/.claude/themes/` for local tweaking. Experimental CC feature — declared
   as `experimental.themes` in `plugin.json`.
+- **`ELI5`** (output style) — small words, short answers, for a fried brain.
+  Select via `/output-style`. Files in `output-styles/` are picked up by
+  convention; no `plugin.json` key needed.
 
 ## skills-used
 
