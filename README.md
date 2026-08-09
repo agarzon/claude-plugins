@@ -37,8 +37,9 @@ Step 2 is not optional — without a version bump nothing propagates.
   it to `~/.claude/themes/` for local tweaking. Experimental CC feature — declared
   as `experimental.themes` in `plugin.json`.
 - **`ELI5`** (output style) — small words, short answers, for a fried brain.
-  Select via `/output-style`. Files in `output-styles/` are picked up by
-  convention; no `plugin.json` key needed.
+  Select via `/config` → *Output style* (`/output-style` still resolves but is
+  a hidden stub since CC moved the picker into `/config`). Files in
+  `output-styles/` are picked up by convention; no `plugin.json` key needed.
 
 ## skills-used
 
