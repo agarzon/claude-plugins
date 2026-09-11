@@ -6,8 +6,7 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/mem-sync.sh\" import",
-            "async": false,
-            "timeout": 10
+            "async": true
           }
         ]
       }

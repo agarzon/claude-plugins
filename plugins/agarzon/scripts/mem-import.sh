@@ -107,15 +107,21 @@ for TABLE in sessions summaries observations; do
   n=$(jq --arg t "$TABLE" '.[$t]|length' "$FILE")
   [ "$n" -gt 0 ] || continue
   echo "${TABLE} (${n}, chunks of ${CHUNK})"
+  # One jq pass per table, not one per chunk. Re-parsing a 28MB payload 27 times
+  # cost ~12s of CPU and grew with the file; slicing in a single pass is flat.
+  jq -c --arg t "$TABLE" --argjson c "$CHUNK" \
+    '{sessions:[], summaries:[], observations:[], prompts:[]} as $empty
+     | .[$t] as $rows
+     | range(0; ($rows|length); $c) as $o
+     | $empty + {($t): $rows[$o:($o + $c)]}' \
+    "$FILE" > "$TMP/chunks.jsonl"
   off=0
-  while [ "$off" -lt "$n" ]; do
-    jq -c --arg t "$TABLE" --argjson o "$off" --argjson c "$CHUNK" \
-      '{sessions:[], summaries:[], observations:[], prompts:[]} + {($t): .[$t][$o:($o+$c)]}' \
-      "$FILE" > "$TMP/c.json"
+  while IFS= read -r chunk; do
+    printf '%s' "$chunk" > "$TMP/c.json"
     printf '  [%d-%d]' "$off" $((off + CHUNK > n ? n : off + CHUNK))
     post "$TMP/c.json"
     off=$((off + CHUNK))
-  done
+  done < "$TMP/chunks.jsonl"
 done
 
 echo "done: ${TOTAL_I} imported, ${TOTAL_S} skipped"
