@@ -62,9 +62,6 @@ if command -v sqlite3 >/dev/null 2>&1 && [ -f "$DB" ]; then
       | def relink: map(.memory_session_id |= ($ren[.] // .));
         .sessions |= relink | .summaries |= relink | .observations |= relink
       ' "$FILE" > "$TMP/relinked.json"; then
-    n_ren=$(jq -n --slurpfile a "$FILE" --slurpfile b "$TMP/relinked.json" \
-      '[$a[0].sessions[].memory_session_id] - [$b[0].sessions[].memory_session_id] | length')
-    [ "$n_ren" = "0" ] || echo "relinked ${n_ren} resumed session(s) to local ids"
     FILE="$TMP/relinked.json"
   fi
 fi
