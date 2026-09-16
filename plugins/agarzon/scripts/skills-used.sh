@@ -8,9 +8,11 @@
 #
 # Two separate signals, because they live in different places:
 #   - Skill tool calls  -> assistant messages, content[].type == "tool_use"
-#   - typed /commands   -> entries with .type == "system"
+#   - typed /commands   -> user entries whose .message.content is a *string*
+#                          starting with <command-message>
 # Do NOT grep the raw file for <command-name>: assistant messages that merely
-# quote the tag match too, and so do tool results echoing it back.
+# quote the tag match too, and so do tool results echoing it back. Tool results
+# carry an array in .message.content, so the string check drops them.
 #
 # A count above 1 means that skill's SKILL.md body entered context more than
 # once. Within one process Claude Code dedupes repeat loads (the second call
@@ -28,7 +30,9 @@ extract() {
     jq -r '.message.content[]? | select(.type=="tool_use" and .name=="Skill") | .input.skill' "$f" 2>/dev/null \
         | sort | uniq -c | sort -rn | sed 's/^/  /'
     echo "Slash commands typed:"
-    jq -r 'select(.type=="system") | tostring | scan("<command-name>([^<]+)")[0]' "$f" 2>/dev/null \
+    jq -r 'select(.type=="user" and (.message.content|type=="string")
+                  and (.message.content|startswith("<command-message>")))
+           | .message.content | scan("<command-name>([^<]+)")[0]' "$f" 2>/dev/null \
         | sort -u | sed 's/^/  /'
 }
 
@@ -40,7 +44,8 @@ if [ "${1:-}" = "--selftest" ]; then
         echo '{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"alpha"}}]}}'
         echo '{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"alpha"}}]}}'
         echo '{"type":"assistant","message":{"content":[{"type":"text","text":"I will mention <command-name>/decoy</command-name> here"}]}}'
-        echo '{"type":"system","content":"<command-name>/beta</command-name>"}'
+        echo '{"type":"user","message":{"content":[{"type":"tool_result","content":"a file quoting <command-name>/echoed</command-name>"}]}}'
+        echo '{"type":"user","message":{"content":"<command-message>beta</command-message>\n<command-name>/beta</command-name>"}}'
     } > "$tmp"
 
     out=$(extract "$tmp")
@@ -48,6 +53,7 @@ if [ "${1:-}" = "--selftest" ]; then
     echo "$out" | grep -qE '^ +2 alpha$'  || { echo "FAIL: duplicate skill not counted as 2"; fail=1; }
     echo "$out" | grep -q  '/beta'        || { echo "FAIL: typed command not found"; fail=1; }
     echo "$out" | grep -q  '/decoy'       && { echo "FAIL: quoted tag leaked from assistant text"; fail=1; }
+    echo "$out" | grep -q  '/echoed'      && { echo "FAIL: quoted tag leaked from tool result"; fail=1; }
     [ "$fail" -eq 0 ] && echo "selftest OK"
     exit "$fail"
 fi

@@ -4,12 +4,24 @@ description: Display a handoff summary in chat for the user to copy into the nex
 argument-hint: "What will the next session focus on?"
 ---
 
+## Gather first
+
+A handoff gets written when context is nearly spent — exactly when recall is thinnest and the gaps fill with plausible fiction. Ground it in the repo before writing a word:
+
+```bash
+git status -sb; git log --oneline @{u}.. 2>/dev/null; git diff --stat
+```
+
+Then read the todo list for what's still open, and scan back through the session for approaches that were tried and abandoned. Not a git repo? Skip the commands.
+
 ## Output format
 
-Display the summary as a single, copyable text block:
+Display the summary as a single fenced code block, so it copies in one click. Markdown won't render inside the fence — that's the trade, and it's the right one: the block exists to be pasted into the next session, not read in this one.
 
+- **Git state**: Branch, clean or dirty, commits ahead of upstream
 - **Session context**: What was worked on
-- **Current state**: What's done, what's pending, any blockers
+- **Current state**: What's done, what's pending, any blockers. Mark each done-claim with whether it was checked — "tests pass (ran)" and "should work (unrun)" read the same to the next session unless you say which one it is
+- **Dead ends**: What was tried and rejected, and why. One line each. This is the only part of a handoff that can't be recovered from git log or the files
 - **Key findings**: Important discoveries or decisions
 - **Next steps**: Specific tasks for the continuation
 - **Suggested skills**: Which skills the agent should invoke in the next session
@@ -23,7 +35,7 @@ If an argument is given, bias the summary toward it.
 
 After the block — outside it, so it doesn't get pasted forward — suggest a 2-4 word kebab-case name for the session that is ending, for the user to run as `/rename <name>`. It makes the session findable in history later, and a name chosen here beats the built-in's, which only reads the last 1000 characters of the conversation.
 
-Aim for under 200 words. A handoff much longer than that is usually restating something that already lives in a file — link it instead. Go longer only when the detail genuinely has nowhere else to live; a truncated handoff defeats the point of writing one.
+Aim for under 250 words. A handoff much longer than that is usually restating something that already lives in a file — link it instead. Go longer only when the detail genuinely has nowhere else to live; a truncated handoff defeats the point of writing one.
 
 ## Handoff file
 

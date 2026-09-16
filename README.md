@@ -32,13 +32,13 @@ Step 2 is not optional — without a version bump nothing propagates.
 - **`skills-used`** (skill) — list the skills invoked in the current session, with counts. See below.
 - **claude-mem sync** (hooks + scripts) — keeps [claude-mem](https://github.com/thedotmack/claude-mem)
   memory in step across machines. See below.
-- **`Agarzon Modarin`** (theme) — port of Midnight Commander's `modarin256`
-  palette (neutral grey base, teal accents). Select via `/theme`; `Ctrl+E` copies
-  it to `~/.claude/themes/` for local tweaking. Experimental CC feature — declared
-  as `experimental.themes` in `plugin.json`.
 - **`ELI5`** (output style) — small words, short answers, for a fried brain.
-  Select via `/config` → *Output style*. Files in `output-styles/` are picked
-  up by convention; no `plugin.json` key needed.
+  Selectable as **`agarzon:ELI5`** — plugin styles are namespaced `plugin:style`,
+  and bare `ELI5` resolves to nothing. Pick it in the `/config` panel, or set
+  `"outputStyle": "agarzon:ELI5"` in `settings.json`. Note that the inline
+  `/config outputStyle=` completion only offers the five built-ins, so this
+  style never appears there. Files in `output-styles/` are picked up by
+  convention; no `plugin.json` key needed.
 
 ## skills-used
 
