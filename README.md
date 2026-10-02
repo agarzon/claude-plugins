@@ -17,10 +17,12 @@ Set `autoUpdate: true` for the `agarzon-plugins` entry in
 `~/.claude/plugins/known_marketplaces.json` so machines pull new skills on the
 next session.
 
-## Add a skill, hook, theme, or output style
+## Add a skill, hook, mod, theme, or output style
 
 1. Drop `plugins/agarzon/skills/<name>/SKILL.md` (or `output-styles/<name>.md`,
-   or edit `hooks/hooks.json`).
+   or edit `hooks/hooks.json`, or the mod in
+   `hooks/register.tsx`; check a mod with `claude plugin validate plugins/agarzon`
+   and `claude plugin test plugins/agarzon`).
 2. Bump `version` in `plugins/agarzon/.claude-plugin/plugin.json`.
 3. Commit and push. Machines with `autoUpdate` pull it on the next session.
 
@@ -28,8 +30,10 @@ Step 2 is not optional — without a version bump nothing propagates.
 
 ## Contents
 
-- **`handoff`** (skill) — display a handoff summary to carry work into the next session.
-- **`skills-used`** (skill) — list the skills invoked in the current session, with counts. See below.
+- **`handoff`** / **`wrap`** (skills) — save pending work to `HANDOFF.md` and continue in a
+  fresh session, or close the day. See below.
+- **Session mod** (`hooks/register.tsx`) — prompt-cache countdown and warning, output-style
+  switcher, context-fill nudge, handoff automation, and the list of loaded skills. See below.
 - **claude-mem sync** (hooks + scripts) — keeps [claude-mem](https://github.com/thedotmack/claude-mem)
   memory in step across machines. See below.
 - **`ELI5`** (output style) — small words, short answers, for a fried brain.
@@ -40,36 +44,50 @@ Step 2 is not optional — without a version bump nothing propagates.
   style never appears there. Files in `output-styles/` are picked up by
   convention; no `plugin.json` key needed.
 
-## skills-used
+## handoff and wrap
 
-`/skills-used` reports which skills have been invoked in the current session and
-how many times each. It reads the session transcript
-(`~/.claude/projects/<cwd with "/" replaced by "-">/<session-uuid>.jsonl`)
-via `scripts/skills-used.sh` — no hook, no state file, nothing to keep in sync,
-because Claude Code already records every `Skill` tool call there.
+`HANDOFF.md`, at the repo root and kept out of git through `.git/info/exclude`, is the
+to-do list that carries work between sessions. It holds only pending work: each item is
+removed when done and the file is deleted when empty.
 
-**The count is the point.** Measured on CC 2.1.220: a skill's `SKILL.md` body is
-not delivered in the `Skill` tool result (that is a 22-char `Launching skill: x`
-stub) but as a separate injected user message. Re-invoking a skill inside one
-process does **not** re-inject it — the second call gets
-`Skill /name is already loaded above; instructions unchanged.` — so a repeat
-invocation costs ~50 tokens, not the body.
+- `/handoff` writes or merges the file, then calls the mod's `handoff_ready` tool. When
+  the turn ends the mod runs `/rename <name>`, `/clear`, `/rename <name>-2`, and sends
+  the next session "Read HANDOFF.md and continue". Claude Code carries a session's name
+  across `/clear`, so the second rename keeps the two sessions apart in history.
+- `/wrap` does the same file plus the end-of-day chores (commits, artifacts to delete,
+  memory and vault updates, approved in one batch), renames the session and stops.
+- A new session that finds a `HANDOFF.md` offers **Load** / **Dismiss** above the prompt.
 
-That dedupe state lives in process memory, not in the transcript. A `--resume`
-loses it, so the first re-invocation after resuming injects the whole body a
-second time and both copies then sit in context. Resume alone injects nothing;
-it takes a re-invocation. A count above 1 in `/skills-used` is exactly that
-duplicate, and it is otherwise invisible.
+## Session mod
 
-Two gotchas encoded in the script, both learned the hard way:
+A mod is a plugin hooks module: `hooks/hooks.json` lists it under `modules`, next to the
+classic command hooks. The row it draws above the prompt:
 
-- Typed `/commands` land in entries with `.type == "system"`, while `Skill` tool
-  calls land in assistant `content[]`. Do not grep the raw file for
-  `<command-name>` — assistant messages that merely quote the tag match too.
-- `allowed-tools` in a skill's frontmatter is a **command**-only key; adding it
-  to a `SKILL.md` makes the skill fail to load with `Execute skill: <name>`.
+```
+⧗ cache 42m │ [ Concise ] │ ctx 62% → /handoff
+loaded: ponytail·hook 1.3k  superpowers·hook 3.3k  plugin-authoring 4.9k ×2
+```
 
-Run `scripts/skills-used.sh --selftest` to check the parsing against a fixture.
+- **Cache countdown.** The prompt cache lives 1 h (transcripts show only
+  `ephemeral_1h` writes). The clock restarts when a main-loop turn that made an API call
+  completes; subagent turns and local commands do not count. At 10 min left: a toast and
+  a sound (`powershell.exe` on WSL, `afplay` on macOS). Past zero the next message
+  re-caches the whole context at 2x input price.
+- **Output style.** The button cycles the `/config` `outputStyle` row. It offers only the
+  built-in styles, so `agarzon:ELI5` is not in the rotation.
+- **Context nudge.** At 60 % fill, a toast and the `ctx` marker suggest `/handoff`.
+- **Loaded list.** Every skill body and every hook-injected block in context now, read
+  from the transcript so it survives `--resume`. Skills cyan, hooks magenta, **red ×N**
+  when a body is in context more than once. That happens across a restart or
+  `--resume`: Claude Code's "already loaded" dedupe lives in process memory, so a
+  re-invocation injects the whole body again, and a typed `/skill` re-injects every
+  time. Only `/compact` or a fresh session removes the copies.
+
+The mod API is early access and changes between releases; `claude plugin validate`
+reports anything the running build would refuse.
+
+`allowed-tools` in a skill's frontmatter is a **command**-only key; adding it to a
+`SKILL.md` makes the skill fail to load with `Execute skill: <name>`.
 
 ## claude-mem sync
 

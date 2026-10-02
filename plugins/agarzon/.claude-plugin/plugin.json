@@ -1,6 +1,6 @@
 {
   "name": "agarzon",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Personal Claude Code skills and workflow extensions.",
   "author": {
     "name": "Alexander Garzon"
@@ -11,9 +11,12 @@
     "claude-code",
     "skills",
     "handoff",
-    "skills-used",
+    "wrap",
+    "mods",
+    "prompt-cache",
     "output-style",
     "claude-mem",
     "personal"
-  ]
+  ],
+  "types": "./types/index.d.ts"
 }
