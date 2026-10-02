@@ -1,52 +1,79 @@
 ---
 name: handoff
-description: Display a handoff summary in chat for the user to copy into the next session, or write it to a file if they ask. Use when ending a session or transitioning work, and whenever the user says "handoff", "wrap up", "hand this off", or asks what the next session should pick up.
-argument-hint: "What will the next session focus on?"
+description: Save the session's pending work to HANDOFF.md and continue in a fresh session. Use when the user says "handoff", "hand this off", "refresh the session", "start fresh", "the context is getting long", or when the context-fill nudge appears. With the argument `wrap` (or through the wrap skill) it also runs the end-of-day chores and does not start a new session.
+argument-hint: "[wrap] [what the next session should focus on]"
 ---
 
-## Gather first
+# Handoff
 
-A handoff gets written when context is nearly spent — exactly when recall is thinnest and the gaps fill with plausible fiction. Ground it in the repo before writing a word:
+`HANDOFF.md` is the to-do list that carries work from one session to the next. It holds only what is still to do, never a record of what was done.
+
+## 1. Gather
+
+A handoff is written when context is fullest and recall is weakest. Ground it in the repo, not memory:
 
 ```bash
 git status -sb; git log --oneline @{u}.. 2>/dev/null; git diff --stat
 ```
 
-Then read the todo list for what's still open, and scan back through the session for approaches that were tried and abandoned. Not a git repo? Skip the commands.
+Read the existing `HANDOFF.md` if there is one, the session's task list, and any plan or spec being executed. Scan the session for approaches that were tried and rejected.
 
-## Output format
+## 2. Wrap chores (only with `wrap`)
 
-Display the summary as a single fenced code block, so it copies in one click. Markdown won't render inside the fence — that's the trade, and it's the right one: the block exists to be pasted into the next session, not read in this one.
+Collect everything first, then ask once (one AskUserQuestion, or one list) before doing any of it:
 
-- **Git state**: Branch, clean or dirty, commits ahead of upstream
-- **Session context**: What was worked on
-- **Current state**: What's done, what's pending, any blockers. Mark each done-claim with whether it was checked — "tests pass (ran)" and "should work (unrun)" read the same to the next session unless you say which one it is
-- **Dead ends**: What was tried and rejected, and why. One line each. This is the only part of a handoff that can't be recovered from git log or the files
-- **Key findings**: Important discoveries or decisions
-- **Next steps**: Specific tasks for the continuation
-- **Suggested skills**: Which skills the agent should invoke in the next session
-- **Relevant files/commands**: Exact paths and commands to resume work
+- Uncommitted changes and unpushed commits: propose commit and push, following the repo's rules.
+- Artifacts this session created that are no longer needed (scratch files, probes, temp dirs, finished plans): exact paths.
+- Memories worth saving and knowledge-base notes to update, per the project's CLAUDE.md.
 
-Reference PRDs, plans, ADRs, issues, commits, and diffs by path — don't restate what they already hold.
+Do what was approved and say what was skipped. Nothing destructive runs without that yes.
 
-Redact API keys, passwords, and personally identifiable information.
+## 3. Write HANDOFF.md
 
-If an argument is given, bias the summary toward it.
-
-After the block — outside it, so it doesn't get pasted forward — suggest a 2-4 word kebab-case name for the session that is ending, for the user to run as `/rename <name>`. It makes the session findable in history later, and a name chosen here beats the built-in's, which only reads the last 1000 characters of the conversation.
-
-Aim for under 250 words. A handoff much longer than that is usually restating something that already lives in a file — link it instead. Go longer only when the detail genuinely has nowhere else to live; a truncated handoff defeats the point of writing one.
-
-## Handoff file
-
-Default to chat only. Save to disk only if the user asks for a file — then:
-
-- Write it to the project root (the repo working-tree root), not a temp or scratchpad directory.
-- Never `git add` or commit it.
-- Don't edit `.gitignore`. It's tracked, so hiding a personal scratch file there pushes your local mess onto everyone else on the repo. `.git/info/exclude` does the same job for this clone only:
+Location: the repo's working-tree root (`git rev-parse --show-toplevel`); outside a repo, the session's root. Never commit it. Keep it out of git for this clone only, never via `.gitignore`:
 
 ```bash
-echo "HANDOFF.md" >> "$(git rev-parse --git-dir)/info/exclude"
+x="$(git rev-parse --git-dir)/info/exclude"; grep -qxF HANDOFF.md "$x" || echo HANDOFF.md >> "$x"
 ```
 
-Not a git repo? Just write the file.
+Merge with the existing file: drop the items finished in this session, keep the rest, add the new ones. If nothing is left to do, delete the file instead of writing it, and say so.
+
+```markdown
+# Handoff: <project>, <YYYY-MM-DD HH:MM>
+
+## Goal
+One or two lines: what the work is for, and the path of the plan or spec it follows.
+
+## State
+Branch, clean or dirty, ahead or behind. Facts the next session must trust or distrust, each marked (verified) or (unverified).
+
+## To do
+- [ ] Ordered items only. Each one stands alone: what to do, where (paths, commands, IDs), and how to tell it is done.
+
+## Constraints / don't retry
+- Decisions taken and approaches rejected, written as rules for the future, one line each with the reason.
+
+## Resume with
+Skills to invoke, files to read first, commands to run.
+```
+
+Rules:
+
+- No "done" section, no history, no narration of the session.
+- Detailed enough to start cold, no longer than that: reference plans, specs, issues and commits by path instead of restating them.
+- Redact secrets, tokens and personal data.
+- If an argument names a focus, bias the file toward it.
+
+## 4. Hand over
+
+Choose a 2-4 word kebab-case name for the session that is ending.
+
+Call the `handoff_ready` tool (an `mcp__…__handoff_ready` tool; load it with ToolSearch `handoff_ready` if it is deferred) with:
+
+- `path`: absolute path of `HANDOFF.md`
+- `name`: the session name
+- `mode`: `refresh` by default, `wrap` when wrapping up
+
+In `refresh` mode it renames this session, clears it and starts the next one on the file as soon as your turn ends; in `wrap` mode it only renames. End your turn right after the call, with at most one line.
+
+If the tool is not available, print the file's path and `/rename <name>` for the user to run instead.
