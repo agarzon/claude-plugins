@@ -65,7 +65,7 @@ test('nudges once when context crosses 60%, and again only after it drops back',
   expect(toasts).toHaveLength(2)
 })
 
-test('a waiting HANDOFF.md shows Load on terminal and desktop; Load resumes from it', async ($, on) => {
+test('a waiting HANDOFF.md shows Load on terminal and desktop; Load resumes from it and takes the banner down', async ($, on) => {
   const { calls } = world(on, {}, new Map([[FILE, '# Handoff']]))
   await $.session.start(start)
 
@@ -78,6 +78,7 @@ test('a waiting HANDOFF.md shows Load on terminal and desktop; Load resumes from
   const ui = await $.ui.mount({ plugin: 'agarzon', surface: 'terminal', ...BAND })
   await ui.press({ key: 'load-handoff' })
   expect(calls).toEqual([expect.stringContaining(`prompt: Read ${FILE} and continue`)])
+  expect(await ui.find({ key: 'load-handoff' })).toBeUndefined()
 })
 
 test('no banner without a HANDOFF.md', async ($, on) => {
