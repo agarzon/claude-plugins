@@ -258,7 +258,7 @@ export const register: Register = on => {
         {file === null ? null : (
           <Box flexDirection="row" gap={1}>
             <Text color="cyan">HANDOFF.md is waiting from your last session</Text>
-            <Button key="load-handoff" label="Load" variant="primary" onPress={() => $.prompt.submit({ text: resumePrompt(file), asUser: true })} />
+            <Button key="load-handoff" label="Load" variant="primary" onPress={async () => { await update($, handoffFile, () => null); await $.prompt.submit({ text: resumePrompt(file), asUser: true }) }} />
             <Button key="dismiss-handoff" label="Dismiss" onPress={() => update($, handoffFile, () => null)} />
           </Box>
         )}
