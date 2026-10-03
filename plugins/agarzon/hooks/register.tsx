@@ -247,7 +247,7 @@ export const register: Register = on => {
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const [min, busy, current, nudge, file, loaded] = await Promise.all([read($, leftMin), read($, isBusy), read($, style), read($, contextNudge), read($, handoffFile), read($, ledger)])
-    if (e.props.hasSurvey || (min === null && current === null && file === null)) return next(e)
+    if (e.props.hasSurvey || (min === null && current === null && file === null && nudge === null && loaded.length === 0)) return next(e)
 
     const { Box, Button, Text } = $.ui.resolve(e)
     const cacheColor = min === null ? 'gray' : min === 0 ? 'red' : min > 20 ? 'green' : min > 10 ? 'yellow' : 'red'

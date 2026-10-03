@@ -13,7 +13,7 @@ export function world(on: On, env: Record<string, string>, files = new Map<strin
   mock.env(on, env)
   const toasts: string[] = []
   const chimes: string[] = []
-  const styles = { current: 'Concise' }
+  const styles = { current: 'Concise' as string | null }
   on('ui.toast', (_$, e) => {
     toasts.push(e.text)
     return { value: undefined }
@@ -23,7 +23,7 @@ export function world(on: On, env: Record<string, string>, files = new Map<strin
     return { value: RAN }
   })
   on('session.usage', () => ({ value: { startedAt: 0, context: { tokens: 312_000, window: 1_000_000 }, rateLimits: [] } }))
-  on('config.list', () => ({ value: [{ ...styleRow, value: styles.current }] }))
+  on('config.list', () => ({ value: styles.current === null ? [] : [{ ...styleRow, value: styles.current }] }))
   on('config.set', (_$, e) => {
     styles.current = String(e.value)
     return { value: e.value }
