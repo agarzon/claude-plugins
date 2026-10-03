@@ -65,6 +65,15 @@ test('nudges once when context crosses 60%, and again only after it drops back',
   expect(toasts).toHaveLength(2)
 })
 
+test('the band shows the context nudge even with no cache timer, style or HANDOFF.md', async ($, on) => {
+  const { styles } = world(on, {})
+  styles.current = null
+  await $.session.start(start)
+  await $.session.measure({ context: { tokens: 610_000, window: 1_000_000, percent: 61 }, rateLimits: [], changed: ['context'] })
+  const ui = await $.ui.mount({ plugin: 'agarzon', surface: 'terminal', ...BAND })
+  expect(await ui.find({ type: 'Text', text: /ctx 61% → \/handoff/ })).toBeDefined()
+})
+
 test('a waiting HANDOFF.md shows Load on terminal and desktop; Load resumes from it and takes the banner down', async ($, on) => {
   const { calls } = world(on, {}, new Map([[FILE, '# Handoff']]))
   await $.session.start(start)
