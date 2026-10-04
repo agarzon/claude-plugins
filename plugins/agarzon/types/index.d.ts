@@ -12,7 +12,6 @@ declare module 'claude-code' {
       isBusy: boolean
       style: string | null
       contextNudge: number | null
-      handoffFile: string | null
       pendingHandoff: PendingHandoff | null
       transcriptDir: string | null
       ledger: LedgerItem[]

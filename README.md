@@ -56,7 +56,6 @@ removed when done and the file is deleted when empty.
   across `/clear`, so the second rename keeps the two sessions apart in history.
 - `/wrap` does the same file plus the end-of-day chores (commits, artifacts to delete,
   memory and vault updates, approved in one batch), renames the session and stops.
-- A new session that finds a `HANDOFF.md` offers **Load** / **Dismiss** above the prompt.
 
 ## Session mod
 

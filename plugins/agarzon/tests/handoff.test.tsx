@@ -73,26 +73,3 @@ test('the band shows the context nudge even with no cache timer, style or HANDOF
   const ui = await $.ui.mount({ plugin: 'agarzon', surface: 'terminal', ...BAND })
   expect(await ui.find({ type: 'Text', text: /ctx 61% → \/handoff/ })).toBeDefined()
 })
-
-test('a waiting HANDOFF.md shows Load on terminal and desktop; Load resumes from it and takes the banner down', async ($, on) => {
-  const { calls } = world(on, {}, new Map([[FILE, '# Handoff']]))
-  await $.session.start(start)
-
-  for (const surface of ['terminal', 'desktop'] as const) {
-    const ui = await $.ui.mount({ plugin: 'agarzon', surface, ...BAND })
-    expect(await ui.find({ key: 'load-handoff' })).toBeDefined()
-    await ui.unmount()
-  }
-
-  const ui = await $.ui.mount({ plugin: 'agarzon', surface: 'terminal', ...BAND })
-  await ui.press({ key: 'load-handoff' })
-  expect(calls).toEqual([expect.stringContaining(`prompt: Read ${FILE} and continue`)])
-  expect(await ui.find({ key: 'load-handoff' })).toBeUndefined()
-})
-
-test('no banner without a HANDOFF.md', async ($, on) => {
-  world(on, {})
-  await $.session.start(start)
-  const ui = await $.ui.mount({ plugin: 'agarzon', surface: 'terminal', ...BAND })
-  expect(await ui.find({ key: 'load-handoff' })).toBeUndefined()
-})
