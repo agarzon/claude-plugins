@@ -35,6 +35,8 @@ Step 2 is not optional — without a version bump nothing propagates.
 - **`challenge`** (skill, `/challenge` only) — questions a plan or decision in rounds until
   every choice is settled, then posts the agreed plan and the decisions worth recording.
   Builds nothing.
+- **`what`** (skill, `/what` only) — the last answer did not land: says it again with context,
+  in Simplified Technical English. `/what <part>` re-explains only that part.
 - **Session mod** (`hooks/register.tsx`) — prompt-cache countdown and warning, output-style
   switcher, context-fill nudge, handoff automation, and the list of loaded skills. See below.
 - **claude-mem sync** (hooks + scripts) — keeps [claude-mem](https://github.com/thedotmack/claude-mem)
