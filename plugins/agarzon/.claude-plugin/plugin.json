@@ -1,6 +1,6 @@
 {
   "name": "agarzon",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Personal Claude Code skills and workflow extensions.",
   "author": {
     "name": "Alexander Garzon"
@@ -12,6 +12,7 @@
     "skills",
     "handoff",
     "wrap",
+    "challenge",
     "mods",
     "prompt-cache",
     "output-style",

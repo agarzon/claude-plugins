@@ -32,6 +32,9 @@ Step 2 is not optional — without a version bump nothing propagates.
 
 - **`handoff`** / **`wrap`** (skills) — save pending work to `HANDOFF.md` and continue in a
   fresh session, or close the day. See below.
+- **`challenge`** (skill, `/challenge` only) — questions a plan or decision in rounds until
+  every choice is settled, then posts the agreed plan and the decisions worth recording.
+  Builds nothing.
 - **Session mod** (`hooks/register.tsx`) — prompt-cache countdown and warning, output-style
   switcher, context-fill nudge, handoff automation, and the list of loaded skills. See below.
 - **claude-mem sync** (hooks + scripts) — keeps [claude-mem](https://github.com/thedotmack/claude-mem)
