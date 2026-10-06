@@ -15,7 +15,6 @@ const alert = atom({ plugin: 'agarzon', key: 'cacheAlert' } as const, 'none' as 
 const isBusy = atom({ plugin: 'agarzon', key: 'isBusy' } as const, false)
 const style = atom({ plugin: 'agarzon', key: 'style' } as const, null)
 const contextNudge = atom({ plugin: 'agarzon', key: 'contextNudge' } as const, null)
-const handoffFile = atom({ plugin: 'agarzon', key: 'handoffFile' } as const, null)
 const pendingHandoff = atom({ plugin: 'agarzon', key: 'pendingHandoff' } as const, null)
 const transcriptDir = atom({ plugin: 'agarzon', key: 'transcriptDir' } as const, null)
 const ledger = atom({ plugin: 'agarzon', key: 'ledger' } as const, [] as LedgerItem[])
@@ -169,8 +168,6 @@ export const register: Register = on => {
     $.clock.every(TICK_MS, () => void tick($))
     const row = await readStyle($)
     await update($, style, () => (row ? String(row.value) : null))
-    const file = `${await $.session.root()}/HANDOFF.md`
-    if (e.isInteractive && (await $.fs.exists(file))) await update($, handoffFile, () => file)
     const configDir = (await $.env.get('CLAUDE_CONFIG_DIR')) ?? `${await $.env.get('HOME')}/.claude`
     const projectDir = `${configDir}/projects/${(await $.session.root()).replace(/[^a-zA-Z0-9]/g, '-')}`
     await update($, transcriptDir, () => projectDir)
@@ -183,11 +180,6 @@ export const register: Register = on => {
     if (typeof checked === 'string') return { deny: checked }
     await update($, pendingHandoff, () => checked)
     return { result: checked.mode === 'refresh' ? 'Handoff accepted: when this turn ends the session is renamed, cleared, and resumed from the file. End your turn now.' : 'Wrap accepted: the session is renamed when this turn ends.' }
-  })
-
-  on('prompt.submit', async ($, e, next) => {
-    await update($, handoffFile, () => null)
-    return next(e)
   })
 
   on('turn.start', async ($, e, next) => {
@@ -246,8 +238,8 @@ export const register: Register = on => {
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    const [min, busy, current, nudge, file, loaded] = await Promise.all([read($, leftMin), read($, isBusy), read($, style), read($, contextNudge), read($, handoffFile), read($, ledger)])
-    if (e.props.hasSurvey || (min === null && current === null && file === null && nudge === null && loaded.length === 0)) return next(e)
+    const [min, busy, current, nudge, loaded] = await Promise.all([read($, leftMin), read($, isBusy), read($, style), read($, contextNudge), read($, ledger)])
+    if (e.props.hasSurvey || (min === null && current === null && nudge === null && loaded.length === 0)) return next(e)
 
     const { Box, Button, Text } = $.ui.resolve(e)
     const cacheColor = min === null ? 'gray' : min === 0 ? 'red' : min > 20 ? 'green' : min > 10 ? 'yellow' : 'red'
@@ -255,13 +247,6 @@ export const register: Register = on => {
 
     return (
       <Box flexDirection="column">
-        {file === null ? null : (
-          <Box flexDirection="row" gap={1}>
-            <Text color="cyan">HANDOFF.md is waiting from your last session</Text>
-            <Button key="load-handoff" label="Load" variant="primary" onPress={async () => { await update($, handoffFile, () => null); await $.prompt.submit({ text: resumePrompt(file), asUser: true }) }} />
-            <Button key="dismiss-handoff" label="Dismiss" onPress={() => update($, handoffFile, () => null)} />
-          </Box>
-        )}
         <Box flexDirection="row" gap={1}>
           <Text color={cacheColor} bold={min === 0 && !busy}>{cacheText}</Text>
           {current === null ? null : <Text dimColor>│</Text>}
