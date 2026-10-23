@@ -12,6 +12,7 @@ My last message did not make sense to the user. Say it again. If an argument nam
    - Sentences of 20 words or fewer, one idea each, active voice.
    - Common words with one meaning. No idioms, no phrasal verbs, no slang.
    - Explain each technical term the first time it appears.
+   - Use the project's own terms: `GLOSSARY.md` if it exists, else the names used in CLAUDE.md and the code. Never swap in a synonym.
    - Keep code, commands, paths, names and numbers exactly as they were.
 
 Keep every fact, warning and question from the original message. Change how it is said, not what it says.
