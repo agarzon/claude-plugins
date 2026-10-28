@@ -18,7 +18,9 @@ Question the user about a plan, design or decision until every choice in it is m
 
 ## Rounds
 
-List every decision the plan needs, including the ones the user did not mention: cutover, rollback, cost, who is affected, how it fails. A decision is ready when nothing it depends on is still open. Each round asks every ready decision and holds back the rest.
+If the why is not clear yet, the first round is one open question about it: the real moment the user needs this, or what success looks like. Their own words carry intent your options can't.
+
+List every decision the plan needs, including the ones the user did not mention: goals, non-goals and anti-goals (what would make it a failure even if it works), cutover, rollback, cost, who is affected, how it fails. A decision is ready when nothing it depends on is still open. Each round asks every ready decision and holds back the rest.
 
 A round is, in this order:
 
@@ -33,6 +35,8 @@ A round is, in this order:
 5. **Held back**: the decisions waiting on this round's answers, one line.
 
 Then stop and wait. The answers settle decisions and unlock the next round.
+
+A decision that text cannot settle (how it looks, feels or performs) gets a throwaway spike as its recommended option, built in a separate session; bring what it taught back here.
 
 ## Done
 
