@@ -3,41 +3,27 @@ import { expect, test } from 'claude-code/testing'
 import { BAND, usage, world } from './world'
 
 const TOOL = 'mcp__agarzon__handoff_ready'
-const FILE = '/w/HANDOFF.md'
 const start = { cwd: '/w', surface: 'terminal', isInteractive: true } as const
 const done = { answer: 'a', durationMs: 1, isAborted: false, turnId: 't1', usage, reason: 'answer' } as const
 
-test('refresh: renames, clears, then resumes from the file, only after the turn ends', async ($, on) => {
-  const { clock, calls } = world(on, {}, new Map([[FILE, '# Handoff']]))
+test('renames only after the turn ends, and never clears or prompts', async ($, on) => {
+  const { clock, calls } = world(on, {})
   await $.session.start(start)
 
-  const answer = await $.tool.call({ tool: TOOL, path: FILE, name: 'mods-cache-watch', mode: 'refresh' })
+  const answer = await $.tool.call({ tool: TOOL, name: 'done-for-today' })
   expect('deny' in answer && answer.deny).toBeFalsy()
   expect(calls).toEqual([])
 
   await $.turn.complete(done)
   await clock.settle()
-  expect(calls).toEqual(['/rename mods-cache-watch', '/clear', '/rename mods-cache-watch-2', expect.stringContaining(`prompt: Read ${FILE} and continue`)])
-})
-
-test('wrap: only renames', async ($, on) => {
-  const { clock, calls } = world(on, {})
-  await $.session.start(start)
-  await $.tool.call({ tool: TOOL, path: FILE, name: 'done-for-today', mode: 'wrap' })
-  await $.turn.complete(done)
-  await clock.settle()
   expect(calls).toEqual(['/rename done-for-today'])
 })
 
-test('refuses a missing file, a bad name or a path that is not HANDOFF.md, and does nothing', async ($, on) => {
+test('refuses a bad name and does nothing', async ($, on) => {
   const { clock, calls } = world(on, {})
   await $.session.start(start)
-  for (const input of [
-    { path: FILE, name: 'ok-name', mode: 'refresh' },
-    { path: FILE, name: 'Bad Name; /clear', mode: 'wrap' },
-    { path: '/etc/passwd', name: 'ok-name', mode: 'wrap' },
-  ]) {
-    const answer = await $.tool.call({ tool: TOOL, ...input })
+  for (const name of ['Bad Name; /clear', '', undefined]) {
+    const answer = await $.tool.call({ tool: TOOL, name })
     expect('deny' in answer && answer.deny).toBeTruthy()
   }
   await $.turn.complete(done)

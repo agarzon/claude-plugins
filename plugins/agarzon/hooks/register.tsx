@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
-import type { CacheAlert, HandoffMode, LedgerItem, PendingHandoff } from '../types'
+import type { CacheAlert, LedgerItem } from '../types'
 
 const TTL_MS = 60 * 60 * 1000
 const WARN_MS = 10 * 60 * 1000
@@ -62,25 +62,8 @@ async function tick($: EngineInterface) {
   }
 }
 
-function resumePrompt(path: string) {
-  return `Read ${path} and continue with its To do list. HANDOFF.md holds only pending work: remove each item from the file as soon as it is done, and delete the file when nothing is left.`
-}
-
-async function checkHandoff($: EngineInterface, input: Record<string, unknown>): Promise<PendingHandoff | string> {
-  const { path, name, mode } = input
-  if (typeof path !== 'string' || !path.startsWith('/') || !path.endsWith('/HANDOFF.md')) return 'path must be the absolute path of a HANDOFF.md file'
-  if (typeof name !== 'string' || !/^[a-z0-9][a-z0-9-]{0,59}$/.test(name)) return 'name must be kebab-case, up to 60 characters'
-  if (mode !== 'refresh' && mode !== 'wrap') return "mode must be 'refresh' or 'wrap'"
-  if (mode === 'refresh') {
-    const stat = await $.fs.stat(path).catch(() => null)
-    if (!stat || stat.kind !== 'file' || stat.size === 0) return `${path} is missing or empty: write it before handing off`
-  }
-  return { mode: mode as HandoffMode, name, path }
-}
-
-function nextName(name: string) {
-  const match = /^(.*)-(\d+)$/.exec(name)
-  return match ? `${match[1]}-${Number(match[2]) + 1}` : `${name}-2`
+function checkName(name: unknown) {
+  return typeof name === 'string' && /^[a-z0-9][a-z0-9-]{0,59}$/.test(name) ? name : null
 }
 
 const SKILL_MARK = 'Base directory for this skill: '
@@ -142,27 +125,17 @@ async function refreshLedger($: EngineInterface) {
   await update($, ledger, () => items)
 }
 
-async function runHandoff($: EngineInterface, handoff: PendingHandoff) {
-  await $.command.run({ command: 'rename', args: handoff.name })
-  if (handoff.mode !== 'refresh') return
-  await $.command.run({ command: 'clear' })
-  await $.command.run({ command: 'rename', args: nextName(handoff.name) })
-  await $.prompt.submit({ text: resumePrompt(handoff.path), asUser: true })
-}
-
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.tool.register({
       name: 'handoff_ready',
-      description: 'Call after writing HANDOFF.md. Renames this session; in refresh mode it then clears the session and starts the next one on the file.',
+      description: 'Call at the end of a handoff. Renames this session when the turn ends.',
       inputSchema: {
         type: 'object',
         properties: {
-          path: { type: 'string', description: 'Absolute path of the HANDOFF.md just written' },
           name: { type: 'string', description: 'kebab-case name for the session that is ending' },
-          mode: { type: 'string', enum: ['refresh', 'wrap'] },
         },
-        required: ['path', 'name', 'mode'],
+        required: ['name'],
       },
     })
     $.clock.every(TICK_MS, () => void tick($))
@@ -176,10 +149,10 @@ export const register: Register = on => {
   })
 
   on('tool.call', { tool: HANDOFF_TOOL }, async ($, e) => {
-    const checked = await checkHandoff($, e as Record<string, unknown>)
-    if (typeof checked === 'string') return { deny: checked }
-    await update($, pendingHandoff, () => checked)
-    return { result: checked.mode === 'refresh' ? 'Handoff accepted: when this turn ends the session is renamed, cleared, and resumed from the file. End your turn now.' : 'Wrap accepted: the session is renamed when this turn ends.' }
+    const name = checkName((e as Record<string, unknown>).name)
+    if (name === null) return { deny: 'name must be kebab-case, up to 60 characters' }
+    await update($, pendingHandoff, () => name)
+    return { result: 'Handoff accepted: the session is renamed when this turn ends. End your turn now.' }
   })
 
   on('turn.start', async ($, e, next) => {
@@ -197,10 +170,10 @@ export const register: Register = on => {
         await tick($)
       }
       await refreshLedger($)
-      const handoff = await read($, pendingHandoff)
-      if (handoff) {
+      const name = await read($, pendingHandoff)
+      if (name) {
         await update($, pendingHandoff, () => null)
-        $.clock.after(0, () => void runHandoff($, handoff))
+        $.clock.after(0, () => void $.command.run({ command: 'rename', args: name }))
       }
     }
     return next(e)
@@ -213,7 +186,7 @@ export const register: Register = on => {
       if (percent < NUDGE_PERCENT) {
         if (nudged !== null) await update($, contextNudge, () => null)
       } else {
-        if (nudged === null) $.ui.toast(`Context at ${percent}%: time to /handoff and continue in a fresh session`, { timeoutMs: 30_000 })
+        if (nudged === null) $.ui.toast(`Context at ${percent}%: time to /handoff`, { timeoutMs: 30_000 })
         if (nudged !== percent) await update($, contextNudge, () => percent)
       }
     }
