@@ -1,12 +1,12 @@
 ---
 name: handoff
-description: Save the session's pending work to HANDOFF.md and continue in a fresh session. Use when the user says "handoff", "hand this off", "refresh the session", "start fresh", "the context is getting long", or when the context-fill nudge appears. With the argument `wrap` (or through the wrap skill) it also runs the end-of-day chores and does not start a new session.
-argument-hint: "[wrap] [what the next session should focus on]"
+description: Close the session. Save pending work to HANDOFF.md, the contract the next session starts from, after the end-of-session chores. Use when the user says "handoff", "hand this off", "wrap", "wrap up", "done for today", "close the day", "let's stop here", "save everything and stop", "start fresh", "the context is getting long", or when the context-fill nudge appears.
+argument-hint: "[what the next session should focus on]"
 ---
 
 # Handoff
 
-`HANDOFF.md` is the to-do list that carries work from one session to the next. It holds only what is still to do, never a record of what was done.
+`HANDOFF.md` is the to-do list that carries work from one session to the next. It holds only what is still to do, never a record of what was done. The handoff ends the session: it starts nothing.
 
 ## 1. Gather
 
@@ -18,7 +18,7 @@ git status -sb; git log --oneline @{u}.. 2>/dev/null; git diff --stat
 
 Read the existing `HANDOFF.md` if there is one, the session's task list, and any plan or spec being executed. Scan the session for approaches that were tried and rejected.
 
-## 2. Wrap chores (only with `wrap`)
+## 2. Chores
 
 Collect everything first, then ask once (one AskUserQuestion, or one list) before doing any of it:
 
@@ -26,7 +26,7 @@ Collect everything first, then ask once (one AskUserQuestion, or one list) befor
 - Artifacts this session created that are no longer needed (scratch files, probes, temp dirs, finished plans): exact paths.
 - Memories worth saving and knowledge-base notes to update, per the project's CLAUDE.md.
 
-Do what was approved and say what was skipped. Nothing destructive runs without that yes.
+Do what was approved and say what was skipped. Nothing destructive runs without that yes. If nothing was collected, skip the question.
 
 ## 3. Write HANDOFF.md
 
@@ -40,6 +40,8 @@ Merge with the existing file: drop the items finished in this session, keep the 
 
 ```markdown
 # Handoff: <project>, <YYYY-MM-DD HH:MM>
+
+> Next session: read this file, present the state and the first To do item, then wait for the user's go before acting on anything.
 
 ## Goal
 One or two lines: what the work is for, and the path of the plan or spec it follows.
@@ -64,16 +66,8 @@ Rules:
 - Redact secrets, tokens and personal data.
 - If an argument names a focus, bias the file toward it.
 
-## 4. Hand over
+## 4. Stop
 
-Choose a 2-4 word kebab-case name for the session that is ending.
+Choose a 2-4 word kebab-case name for the session that is ending and call the `handoff_ready` tool (an `mcp__…__handoff_ready` tool; load it with ToolSearch `handoff_ready` if it is deferred) with `name`. It renames the session when the turn ends. If the tool is not available, print `/rename <name>` for the user to run instead.
 
-Call the `handoff_ready` tool (an `mcp__…__handoff_ready` tool; load it with ToolSearch `handoff_ready` if it is deferred) with:
-
-- `path`: absolute path of `HANDOFF.md`
-- `name`: the session name
-- `mode`: `refresh` by default, `wrap` when wrapping up
-
-In `refresh` mode it renames this session, clears it and starts the next one on the file as soon as your turn ends; in `wrap` mode it only renames. End your turn right after the call, with at most one line.
-
-If the tool is not available, print the file's path and `/rename <name>` for the user to run instead.
+End the turn right after, with the file's path and one line: run `/clear` or quit; the next session starts by reading the file.

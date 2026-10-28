@@ -30,15 +30,15 @@ Step 2 is not optional — without a version bump nothing propagates.
 
 ## Contents
 
-- **`handoff`** / **`wrap`** (skills) — save pending work to `HANDOFF.md` and continue in a
-  fresh session, or close the day. See below.
+- **`handoff`** (skill) — closes the session: end-of-session chores, then pending work saved
+  to `HANDOFF.md` for the next session. See below.
 - **`challenge`** (skill, `/challenge` only) — questions a plan or decision in rounds until
   every choice is settled, then posts the agreed plan and the decisions worth recording.
   Builds nothing.
 - **`what`** (skill, `/what` only) — the last answer did not land: says it again with context,
   in Simplified Technical English. `/what <part>` re-explains only that part.
 - **Session mod** (`hooks/register.tsx`) — prompt-cache countdown and warning, output-style
-  switcher, context-fill nudge, handoff automation, and the list of loaded skills. See below.
+  switcher, context-fill nudge, session rename on handoff, and the list of loaded skills. See below.
 - **claude-mem sync** (hooks + scripts) — keeps [claude-mem](https://github.com/thedotmack/claude-mem)
   memory in step across machines. See below.
 - **`ELI5`** (output style) — small words, short answers, for a fried brain.
@@ -49,18 +49,17 @@ Step 2 is not optional — without a version bump nothing propagates.
   style never appears there. Files in `output-styles/` are picked up by
   convention; no `plugin.json` key needed.
 
-## handoff and wrap
+## handoff
 
 `HANDOFF.md`, at the repo root and kept out of git through `.git/info/exclude`, is the
 to-do list that carries work between sessions. It holds only pending work: each item is
 removed when done and the file is deleted when empty.
 
-- `/handoff` writes or merges the file, then calls the mod's `handoff_ready` tool. When
-  the turn ends the mod runs `/rename <name>`, `/clear`, `/rename <name>-2`, and sends
-  the next session "Read HANDOFF.md and continue". Claude Code carries a session's name
-  across `/clear`, so the second rename keeps the two sessions apart in history.
-- `/wrap` does the same file plus the end-of-day chores (commits, artifacts to delete,
-  memory and vault updates, approved in one batch), renames the session and stops.
+`/handoff` (also "wrap", "done for today", or the context nudge) runs the end-of-session
+chores (commits, artifacts to delete, memory and vault updates, approved in one batch),
+writes or merges the file, and calls the mod's `handoff_ready` tool, which renames the
+session when the turn ends. Then it stops: you `/clear` or quit, and the next session
+reads the file, presents the state and waits for your go.
 
 ## Session mod
 

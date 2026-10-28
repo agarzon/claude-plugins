@@ -1,6 +1,4 @@
 export type CacheAlert = 'none' | 'soon' | 'cold'
-export type HandoffMode = 'refresh' | 'wrap'
-export type PendingHandoff = { mode: HandoffMode; name: string; path: string }
 export type LedgerItem = { name: string; kind: 'skill' | 'hook'; tokens: number; count: number }
 
 declare module 'claude-code' {
@@ -12,7 +10,7 @@ declare module 'claude-code' {
       isBusy: boolean
       style: string | null
       contextNudge: number | null
-      pendingHandoff: PendingHandoff | null
+      pendingHandoff: string | null
       transcriptDir: string | null
       ledger: LedgerItem[]
     }
