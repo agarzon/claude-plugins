@@ -35,6 +35,10 @@ Step 2 is not optional — without a version bump nothing propagates.
 - **`challenge`** (skill, `/challenge` only) — questions a plan or decision in rounds until
   every choice is settled, then posts the agreed plan and the decisions worth recording.
   Builds nothing.
+- **`debug`** (skill) — root cause before any fix: reproduce, find the failing layer, one
+  hypothesis at a time, stop after 3 failed fixes.
+- **`tdd`** (skill) — test-first: watch it fail for the right reason, least code to pass,
+  whole suite green before done.
 - **`what`** (skill, `/what` only) — the last answer did not land: says it again with context,
   in Simplified Technical English. `/what <part>` re-explains only that part.
 - **Session mod** (`hooks/register.tsx`) — prompt-cache countdown and warning, output-style
