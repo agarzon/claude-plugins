@@ -25,6 +25,7 @@ Collect everything first, then ask once (one AskUserQuestion, or one list) befor
 - Uncommitted changes and unpushed commits: propose commit and push, following the repo's rules.
 - Artifacts this session created that are no longer needed (scratch files, probes, temp dirs, finished plans): exact paths.
 - Memories worth saving and knowledge-base notes to update, per the project's CLAUDE.md.
+- Constraints in the existing `HANDOFF.md` whose thread has no To do item left: offer to save the ones that still matter as a memory or knowledge-base note. They leave the file either way.
 
 Do what was approved and say what was skipped. Nothing destructive runs without that yes. If nothing was collected, skip the question.
 
@@ -41,7 +42,10 @@ Merge with the existing file: drop the items finished in this session, keep the 
 ```markdown
 # Handoff: <project>, <YYYY-MM-DD HH:MM>
 
-> Next session: read this file, present the state and the first To do item, then wait for the user's go before acting on anything.
+> Next session: read this file, present the state and the Next item, then wait for the user's go before acting on anything.
+
+## Next
+One line: the thread to resume and its first To do item. Exactly one, even when several threads are open.
 
 ## Goal
 One or two lines: what the work is for, and the path of the plan or spec it follows.
@@ -53,7 +57,7 @@ Branch, clean or dirty, ahead or behind. Facts the next session must trust or di
 - [ ] Ordered items only. Each one stands alone: what to do, where (paths, commands, IDs), and how to tell it is done.
 
 ## Constraints / don't retry
-- Decisions taken and approaches rejected, written as rules for the future, one line each with the reason.
+- Decisions taken and approaches rejected, written as rules for the future, one line each with the reason. Only for threads that still have a To do item.
 
 ## Resume with
 Skills to invoke, files to read first, commands to run.
@@ -65,6 +69,13 @@ Rules:
 - Detailed enough to start cold, no longer than that: reference plans, specs, issues and commits by path instead of restating them.
 - Redact secrets, tokens and personal data.
 - If an argument names a focus, bias the file toward it.
+
+Before saving, check the draft and fix what fails:
+
+- `## Next` names one item, and that item is in To do.
+- Every To do item says how to tell it is done.
+- Every State fact is marked (verified) or (unverified).
+- Every Constraint belongs to a thread with a To do item.
 
 ## 4. Stop
 
