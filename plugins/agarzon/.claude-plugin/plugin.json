@@ -1,6 +1,6 @@
 {
   "name": "agarzon",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "Personal Claude Code skills and workflow extensions.",
   "author": {
     "name": "Alexander Garzon"
@@ -75,7 +75,7 @@
     "showSidebarButton": {
       "type": "boolean",
       "title": "Sidebar button",
-      "description": "A ☰ button in the band (and /panel) that opens the Git, Context, Agents, Cache and Sounds tabs beside the transcript. Left open, they reopen in the next session.",
+      "description": "A ☰ button in the band (and /panel) that opens the Git, Context, Agents, Cache, Sounds and Find tabs beside the transcript. Left open, they reopen in the next session.",
       "default": true
     },
     "skillGuard": {

@@ -20,16 +20,16 @@ test('git -z output parses modified, untracked and renamed files with their coun
   ])
 })
 
-test('/panel and ☰ open the five tabs and close them; left open, they reopen next session', async ($, on) => {
+test('/panel and ☰ open the six tabs and close them; left open, they reopen next session', async ($, on) => {
   const { panes, store } = world(on, {})
   await $.session.start(start)
   expect((await $.command.run(panel)).text).toContain('opened')
-  expect([...panes.values()]).toEqual(['Git', 'Context', 'Agents', 'Cache', 'Sounds'])
+  expect([...panes.values()]).toEqual(['Git', 'Context', 'Agents', 'Cache', 'Sounds', 'Find'])
   expect(store.get('sidebar-open')).toBe(true)
 
   panes.clear()
   await $.session.start(start)
-  expect(panes.size).toBe(5)
+  expect(panes.size).toBe(6)
 
   const band = await $.ui.mount({ plugin: 'agarzon', surface: 'terminal', ...BAND })
   await band.press({ key: 'sidebar' })

@@ -12,9 +12,10 @@ import { afterCommand, clearGit, noteTouched, refreshGit, startGit } from './git
 import { measureLimits } from './limits'
 import { filterListing, loadHiddenSkills } from './listing'
 import { applyOverrides, noteServed } from './models'
+import { clearFind, installFind } from './find'
 import { clearRail, installRail } from './rail'
 import { setOptions, turnSoundMs } from './options'
-import { installSidebar, PANEL_COMMAND, startSidebar, toggleSidebar } from './sidebar'
+import { FIND_COMMAND, installSidebar, openFind, PANEL_COMMAND, startSidebar, toggleSidebar } from './sidebar'
 import { clearSkills, guardSkill, loadingInMain, refreshLedger, startSkills } from './skills'
 import { play, SOUNDS_COMMAND, soundsCommand, startSounds } from './sounds'
 import { clearWarm, noteActivity, startWarm, WARM_COMMAND, warmCommand } from './warm'
@@ -67,6 +68,7 @@ export const register: Register = (on, options) => {
   })
 
   on('command.run', { command: PANEL_COMMAND }, async $ => ({ text: await toggleSidebar($) }))
+  on('command.run', { command: FIND_COMMAND }, async ($, e) => ({ text: await openFind($, e.args) }))
 
   on('classic.SessionStart', async ($, e, next) => {
     if (e.transcript_path) await startSkills($, e.transcript_path)
@@ -167,6 +169,7 @@ export const register: Register = (on, options) => {
   })
 
   on('session.end', async ($, e, next) => {
+    if (e.reason === 'clear' || e.reason === 'resume') await clearFind($)
     if (e.reason === 'clear') {
       await clearCache($)
       await clearContext($)
@@ -189,4 +192,5 @@ export const register: Register = (on, options) => {
   installRail(on)
   installBand(on)
   installSidebar(on)
+  installFind(on)
 }

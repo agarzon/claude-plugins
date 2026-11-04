@@ -47,7 +47,7 @@ Step 2 is not optional — without a version bump nothing propagates.
 - **Session mod** (`hooks/`, entry `register.tsx`) — a band above the prompt: prompt rail, git row,
   model/effort/style switches, context, 5h/7d usage, prompt-cache timer, cold-send guard,
   keep-warm, auto-handoff, sounds, loaded skills, and a sidebar (Git, Context, Agents, Cache,
-  Sounds tabs). See below.
+  Sounds, Find tabs). See below.
 - **claude-mem sync** (hooks + scripts) — keeps [claude-mem](https://github.com/thedotmack/claude-mem)
   memory in step across machines. See below.
 - **`ELI5`** (output style) — small words, short answers, for a fried brain.
@@ -130,7 +130,7 @@ prompts ‹ 4 5 6 7 8 9 10 11 [12] › 12/12
   answer, the command is refused. It reads the command text only, so it catches mistakes but
   is not a security boundary: a script file or `docker exec` gets past it. Use
   `permissions.deny` for rules that must hold. A command an `ask` rule also matches prompts twice.
-- **Sidebar** (`☰` in the band, or `/panel`). Five tabs beside the transcript; left open,
+- **Sidebar** (`☰` in the band, or `/panel`). Six tabs beside the transcript; left open,
   they reopen next session. Docked in fullscreen from 110 columns, inline above the prompt
   otherwise; drag the edge to resize (Claude Code keeps the width).
   - **Git**: branch, PR/MR and CI, every uncommitted file with +/−; `●` marks files Claude
@@ -142,6 +142,8 @@ prompts ‹ 4 5 6 7 8 9 10 11 [12] › 12/12
   - **Cache**: time left, keep-warm and auto-handoff switches, the last requests' cache
     reads and writes (a big write is yellow), and keep-warm pings.
   - **Sounds**: each sound on or off, and mute all.
+  - **Find** (`/find [text]`): search this session's messages and tool calls, narrow to you,
+    Claude or tools, and click or press Enter on a result to jump to it. Newest 50 shown.
 
 The mod API is early access and changes between releases; `claude plugin validate`
 reports anything the running build would refuse.
