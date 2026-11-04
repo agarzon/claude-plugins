@@ -136,6 +136,15 @@ for (const command of ['rm -rf $DIR', 'rm -rf "$HOME/x"', 'rm -rf build/*', 'rm 
   })
 }
 
+for (const command of ['rm -rf ~/x', 'cd ~/w && rm -rf build']) {
+  test(`with no HOME, ~ is left to the shell: ${command}`, () => {
+    const [risk] = classify(command, '')
+    expect(risk?.note).toContain("can't preview")
+    expect(risk?.checks).toEqual([])
+    expect(risk?.reason).not.toContain(' /x')
+  })
+}
+
 test('git previews are read-only and never run the repo hook', () => {
   expect(checks('git -C /r reset --hard').map(check => [check.argv.join(' '), check.cwd])).toEqual([
     [`${GIT} status --short`, '/r'],

@@ -18,7 +18,7 @@ const PREFIX_VALUE_FLAGS = new Set(['-u', '-g', '-h', '-p', '-n', '-I', '-L', '-
 const SHELLS = new Set(['bash', 'sh', 'zsh', 'fish', 'dash', 'ksh'])
 const SQL_CLIENTS = new Set(['psql', 'mysql', 'mariadb', 'sqlite3'])
 const SSH_VALUE_FLAG = /^-[bcDEeFIiJLlmOoPpQRSWw]$/
-const SHELL_ONLY_PATH = /[$`*?[\]{}]|^~[^/]/
+const SHELL_ONLY_PATH = /[$`*?[\]{}]|^~/
 const SQL_WIPE = /\b(?:drop\s+(?:table|database|schema)|truncate)\b/i
 const MIGRATION = /^(?:(?:npx|bunx|pnpx|pnpm(?: exec)?|yarn|bundle exec|php|python3?)\s+)?(?:\S*\/)?(?:prisma (?:migrate (?:deploy|dev|reset)|db push)|supabase (?:db (?:reset|push)|migration up)|drizzle-kit (?:push|migrate)|knex migrate|sequelize(?:-cli)? db:migrate|(?:rails|rake) db:(?:migrate|reset|drop)|alembic (?:upgrade|downgrade)|typeorm migration:run|flyway (?:migrate|clean)|liquibase update|artisan (?:migrate(?!:status)|db:wipe)|manage\.py migrate)/
 // A repo's core.fsmonitor is a program git runs on status: previews must not start code from a folder the command only names.
@@ -111,7 +111,7 @@ function stripPrefixes(words: string[]) {
 }
 
 function expandHome(path: string, home: string) {
-  return path.replace(/^~(?=\/|$)/, home)
+  return home === '' ? path : path.replace(/^~(?=\/|$)/, home)
 }
 
 function resolveDir(dir: string, from: string | null | undefined, home: string) {
