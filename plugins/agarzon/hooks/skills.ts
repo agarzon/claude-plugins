@@ -1,10 +1,19 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface } from 'claude-code'
+import type { EngineInterface, SkillPromptInput } from 'claude-code'
 
 import type { LedgerItem } from '../types'
+import { isOn } from './options'
 
-const transcriptDir = atom({ plugin: 'agarzon', key: 'transcriptDir' } as const, null)
+const transcriptPath = atom({ plugin: 'agarzon', key: 'transcriptPath' } as const, null)
 const ledger = atom({ plugin: 'agarzon', key: 'ledger' } as const, [] as LedgerItem[])
+const loaded = atom({ plugin: 'agarzon', key: 'skillsLoaded' } as const, [] as string[])
+
+const BIG_TOKENS = 8000
+const mainLoads = new Set<string>()
+
+const bare = (name: string) => name.split(':').pop() ?? name
+const folderOf = (path: string) => path.replace(/[\\/][^\\/]*$/, '')
+const skillKey = (e: SkillPromptInput) => (e.path ? folderOf(e.path) : e.pluginName ? `${e.pluginName}:${bare(e.skill)}` : e.skill)
 
 const SKILL_MARK = 'Base directory for this skill: '
 
@@ -14,29 +23,11 @@ function textOf(content: unknown): string {
   return ''
 }
 
-function hookLabel(text: string, plugins: string[]) {
-  const lower = text.replace(/\S*\/\S*/g, ' ').toLowerCase()
-  const hits = plugins.map(name => [name, lower.indexOf(name.toLowerCase())] as const).filter(([, at]) => at >= 0)
-  if (hits.length) return hits.sort((a, b) => a[1] - b[1])[0]![0]
-  const line = text.replace(/\x1b\[[0-9;]*m/g, '').split('\n').map(l => l.replace(/<[^>]+>/g, '').trim())
-    .find(l => l && !l.startsWith('Output too large') && !l.startsWith('Preview')) ?? 'hook'
-  return line.length > 28 ? line.slice(0, 27) + '…' : line
-}
-
-function hookChars(text: string) {
-  const persisted = /Output too large \(([\d.]+)KB\)/.exec(text)
-  return persisted ? Number(persisted[1]) * 1024 : text.length
-}
-
-export function parseLedger(transcript: string, plugins: string[]): LedgerItem[] {
+export function parseLedger(transcript: string): LedgerItem[] {
   let items = new Map<string, LedgerItem>()
-  const add = (name: string, kind: LedgerItem['kind'], chars: number) => {
-    const item = items.get(`${kind}:${name}`) ?? { name, kind, tokens: 0, count: 0 }
-    items.set(`${kind}:${name}`, { ...item, tokens: item.tokens + Math.round(chars / 4), count: item.count + 1 })
-  }
   for (const line of transcript.split('\n')) {
-    if (!line.includes(SKILL_MARK) && !line.includes('"hook_') && !line.includes('compact_boundary')) continue
-    let entry: { type?: string; subtype?: string; isMeta?: boolean; message?: { content?: unknown }; attachment?: { type?: string; content?: unknown } }
+    if (!line.includes(SKILL_MARK) && !line.includes('compact_boundary')) continue
+    let entry: { type?: string; subtype?: string; isMeta?: boolean; message?: { content?: unknown } }
     try {
       entry = JSON.parse(line)
     } catch {
@@ -46,34 +37,56 @@ export function parseLedger(transcript: string, plugins: string[]): LedgerItem[]
       items = new Map()
     } else if (entry.type === 'user' && entry.isMeta) {
       const text = textOf(entry.message?.content)
-      if (text.startsWith(SKILL_MARK)) add(text.slice(SKILL_MARK.length).split('\n')[0]!.split('/').pop() ?? '?', 'skill', text.length)
-    } else if (/^hook_(success|additional_context|system_message)$/.test(entry.attachment?.type ?? '')) {
-      const text = textOf(entry.attachment?.content)
-      if (text.trim()) add(hookLabel(text, plugins), 'hook', hookChars(text))
+      if (!text.startsWith(SKILL_MARK)) continue
+      const folder = text.slice(SKILL_MARK.length).split('\n')[0]!
+      const item = items.get(folder) ?? { folder, tokens: 0, count: 0 }
+      items.set(folder, { folder, tokens: item.tokens + Math.round(text.length / 4), count: item.count + 1 })
     }
   }
   return [...items.values()]
 }
 
 export async function refreshLedger($: EngineInterface) {
-  const dir = await read($, transcriptDir)
-  if (dir === null) return
-  const text = await $.fs.read(`${dir}/${await $.session.id()}.jsonl`).catch(() => null)
+  const path = await read($, transcriptPath)
+  if (path === null) return
+  const text = await $.fs.read(path).catch(() => null)
   if (typeof text !== 'string') return
-  const plugins = Object.keys((await $.settings.read()).enabledPlugins ?? {}).map(key => key.split('@')[0]!)
-  const items = parseLedger(text, plugins)
+  const items = parseLedger(text)
   await update($, ledger, () => items)
 }
 
-export async function startSkills($: EngineInterface) {
-  const configDir = (await $.env.get('CLAUDE_CONFIG_DIR')) ?? `${await $.env.get('HOME')}/.claude`
-  const projectDir = `${configDir}/projects/${(await $.session.root()).replace(/[^a-zA-Z0-9]/g, '-')}`
-  await update($, transcriptDir, () => projectDir)
+export async function startSkills($: EngineInterface, path: string) {
+  await update($, transcriptPath, () => path)
   await refreshLedger($)
 }
 
 export async function clearSkills($: EngineInterface) {
   await update($, ledger, () => [])
+  await update($, loaded, () => [])
+}
+
+export async function loadingInMain<T>(name: string, load: () => Promise<T>) {
+  mainLoads.add(bare(name))
+  try {
+    return await load()
+  } finally {
+    mainLoads.delete(bare(name))
+  }
+}
+
+export async function guardSkill($: EngineInterface, e: SkillPromptInput) {
+  const name = bare(e.skill)
+  if (!isOn('skillGuard') || !mainLoads.has(name)) return null
+  const key = skillKey(e)
+  const k = (e.text.length / 4000).toFixed(1)
+  const inLedger = (await read($, ledger)).some(item => item.folder === key)
+  if (inLedger || (await read($, loaded)).includes(key)) {
+    $.ui.toast(`Skipped a second copy of ${name} (~${k}k tokens): it is still in context.`)
+    return `The ${name} skill is already loaded earlier in this conversation. Follow the instructions from that copy; this second copy was skipped to save ~${k}k tokens of context.`
+  }
+  await update($, loaded, keys => [...keys, key])
+  if (e.text.length / 4 >= BIG_TOKENS) $.ui.toast(`${name} loaded: ~${k}k tokens of context.`)
+  return null
 }
 
 export function loadedItems($: EngineInterface) {

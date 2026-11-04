@@ -44,8 +44,9 @@ Step 2 is not optional — without a version bump nothing propagates.
   whole suite green before done.
 - **`what`** (skill, `/what` only) — the last answer did not land: says it again with context,
   in Simplified Technical English. `/what <part>` re-explains only that part.
-- **Session mod** (`hooks/`, entry `register.tsx`) — prompt-cache countdown and warning, output-style
-  switcher, context-fill nudge, session rename on handoff, and the list of loaded skills. See below.
+- **Session mod** (`hooks/`, entry `register.tsx`) — a band above the prompt: prompt rail, git row,
+  model/effort/style switches, context, 5h/7d usage, prompt-cache timer, cold-send guard,
+  keep-warm, auto-handoff, sounds, loaded skills. See below.
 - **claude-mem sync** (hooks + scripts) — keeps [claude-mem](https://github.com/thedotmack/claude-mem)
   memory in step across machines. See below.
 - **`ELI5`** (output style) — small words, short answers, for a fried brain.
@@ -70,28 +71,53 @@ reads the file, presents the state and waits for your go.
 
 ## Session mod
 
-A mod is a plugin hooks module: `hooks/hooks.json` lists it under `modules`, next to the
-classic command hooks. The row it draws above the prompt:
+A mod is a plugin hooks module: `hooks/hooks.json` lists it under `modules`. It draws a band
+above the prompt. Every part has an on/off switch in `/config` → agarzon.
 
 ```
-⧗ cache 42m │ [ Concise ] │ ctx 62% → /handoff
-loaded: ponytail·hook 1.3k  superpowers·hook 3.3k  plugin-authoring 4.9k ×2
+prompts ‹ 4 5 6 7 8 9 10 11 [12] › 12/12
+⎇ feat/x* ↑2 +12 −3 │ MR !5 ✓ │ ~/GIT/app │ v2.1.318 │ 1h15m
+⧗ cache 42m warm │ opus-5.5 medium │ Concise │ ctx 162k ▓▓░░░░░░ │ 5h 31% @16:40 │ 7d 12% @Fri │ skills 2 · 18k │ ♪
 ```
 
-- **Cache countdown.** The prompt cache lives 1 h (transcripts show only
-  `ephemeral_1h` writes). The clock restarts when a main-loop turn that made an API call
-  completes; subagent turns and local commands do not count. At 10 min left: a toast and
-  a sound (`powershell.exe` on WSL, `afplay` on macOS). Past zero the next message
-  re-caches the whole context at 2x input price.
-- **Output style.** The button cycles the `/config` `outputStyle` row. It offers only the
-  built-in styles, so `agarzon:ELI5` is not in the rotation.
-- **Context nudge.** At 60 % fill, a toast and the `ctx` marker suggest `/handoff`.
-- **Loaded list.** Every skill body and every hook-injected block in context now, read
-  from the transcript so it survives `--resume`. Skills cyan, hooks magenta, **red ×N**
-  when a body is in context more than once. That happens across a restart or
-  `--resume`: Claude Code's "already loaded" dedupe lives in process memory, so a
-  re-invocation injects the whole body again, and a typed `/skill` re-injects every
-  time. Only `/compact` or a fresh session removes the copies.
+- **Prompt rail.** Your last 9 typed prompts. Click a number to scroll the transcript to
+  it; `‹ ›` step one prompt; hover shows its first line. Narrow terminals show `‹ 12/27 ›`.
+- **Git row.** Branch (`*` = uncommitted changes), worktree, ahead/behind, uncommitted
+  `+/−` lines, the open PR (`gh`, GitHub remotes) or MR (`glab`, any other remote) with its
+  CI, then folder, Claude Code version and session time. Refreshed after each turn and
+  each `git` command; PR/MR every 5 min and after a push.
+- **Model and effort.** Click to cycle. The change is for this session only: the mod
+  rewrites each main-conversation request, so `settings.json` is never written and
+  `/status` keeps showing the default. The label reads `opus?` until the next send, then
+  the version actually served. `best` and `opusplan` are left out of the cycle.
+- **Output style.** Cycles the built-in styles (`agarzon:ELI5` is not in the rotation).
+- **Context.** Tokens and an 8-cell bar against the model's window. Yellow from half the
+  limit, red at the limit (default 200k), where a toast, a sound and a `/agarzon:handoff`
+  button appear.
+- **5h / 7d.** The colour is the usage projected at the window's reset from the last
+  30 min of pace: orange from 75 %, red from 90 %. Red shows when it reaches 100 %.
+  In the window's first hour (first day for 7d) the colour follows the % used instead.
+- **Cache.** The main conversation's prompt cache lives 1 h from its last request. Toast
+  and sound at 10 min left and when it goes cold.
+- **Cold-send guard.** Once the cache is cold and the context is 50k or more, your next
+  typed prompt is held back once and put back in the box; Enter again sends it.
+  Background, scheduled and slash-command prompts are never held.
+- **Keep-warm** (`warm` button, or `/warm`, `/warm 90m`, `/warm off`). Pings the
+  cache invisibly after 45 min idle so it never expires. Stops after 10 pings in a row,
+  when a ping finds the cache cold, or at the time you gave. `/warm` lists the pings.
+- **Auto-handoff** (off by default). At 5 min before the cache expires, with a 1-min
+  warning, runs `/agarzon:handoff` and declines its permission prompts. Never fires
+  while keep-warm is on.
+- **Sounds.** Turn done (over 30 s), needs you, subagent done, cache expiring, context
+  limit, cache cold: bundled CC0 files (`sounds/LICENSES.md`), each replaceable in
+  `/config`. `♪` mutes all; `/sounds` mutes or unmutes one sound.
+  Players: `afplay` (macOS), `paplay`/`aplay` (Linux), `powershell.exe` (WSL, Windows).
+- **Skills chip and skill guard.** `skills N · Xk`: the skills now in context and their
+  size, read from the transcript so it survives `--resume`; red when one is in context
+  more than once. Claude Code skips a repeat only for a `Skill` tool call in the
+  same run: a typed `/skill`, or any load after `--resume`, re-sends the whole body. The
+  guard turns those repeats into a one-line pointer to the first copy, and toasts when a
+  skill of 8k tokens or more loads.
 
 The mod API is early access and changes between releases; `claude plugin validate`
 reports anything the running build would refuse.

@@ -1,6 +1,6 @@
 {
   "name": "agarzon",
-  "version": "0.14.2",
+  "version": "0.15.0",
   "description": "Personal Claude Code skills and workflow extensions.",
   "author": {
     "name": "Alexander Garzon"
@@ -18,8 +18,155 @@
     "mods",
     "prompt-cache",
     "output-style",
+    "sounds",
     "claude-mem",
     "personal"
   ],
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "showGitRow": {
+      "type": "boolean",
+      "title": "Show: git row",
+      "description": "The band row with the branch, uncommitted changes, worktree, open PR/MR (gh for GitHub, glab otherwise), folder, Claude Code version and session time.",
+      "default": true
+    },
+    "showPromptRail": {
+      "type": "boolean",
+      "title": "Show: prompt rail",
+      "description": "The row of numbered prompts above the band; click one to jump to it.",
+      "default": true
+    },
+    "showModelButtons": {
+      "type": "boolean",
+      "title": "Show: model and effort buttons",
+      "description": "The band buttons that switch model and effort for this session. Off, requests go out unchanged.",
+      "default": true
+    },
+    "showUsageLimits": {
+      "type": "boolean",
+      "title": "Show: 5h/7d usage",
+      "description": "The 5-hour and 7-day usage in the band.",
+      "default": true
+    },
+    "showContext": {
+      "type": "boolean",
+      "title": "Show: context meter",
+      "description": "The context size, bar and handoff button in the band.",
+      "default": true
+    },
+    "showCache": {
+      "type": "boolean",
+      "title": "Show: cache timer",
+      "description": "The prompt-cache timer in the band.",
+      "default": true
+    },
+    "showLoadedSkills": {
+      "type": "boolean",
+      "title": "Show: skills chip",
+      "description": "The `skills N · Xk` chip in the band: skills now in context and their size, red when one is in context twice.",
+      "default": true
+    },
+    "showSoundButton": {
+      "type": "boolean",
+      "title": "Show: sound button",
+      "description": "The ♪ in the band: click mutes or unmutes all sounds. Per-sound toggles: /sounds.",
+      "default": true
+    },
+    "skillGuard": {
+      "type": "boolean",
+      "title": "Skill guard",
+      "description": "In the main conversation: a toast when a skill of 8k tokens or more loads, and a second load of a skill still in context (a typed /skill, or any load after --resume, which Claude Code re-sends in full) is replaced by a one-line pointer to the first copy.",
+      "default": true
+    },
+    "guardColdSend": {
+      "type": "boolean",
+      "title": "Cold-send guard",
+      "description": "When the prompt cache has gone cold, hold back your next typed prompt once and say what re-caching costs; Enter again sends it. Prompts you did not type are never held back.",
+      "default": true
+    },
+    "guardColdSendMinK": {
+      "type": "number",
+      "title": "Cold-send guard from (k tokens)",
+      "description": "The guard holds a prompt back only when the context is at least this many thousand tokens.",
+      "default": 50
+    },
+    "keepWarm": {
+      "type": "boolean",
+      "title": "Keep-warm",
+      "description": "Offers the warm button and /warm, which ping the prompt cache while you are away so it does not expire. Never on by itself.",
+      "default": true
+    },
+    "keepWarmAfterMin": {
+      "type": "number",
+      "title": "Keep-warm ping after (minutes idle)",
+      "description": "Keep-warm pings once the conversation has been idle this long. The 1-hour cache leaves this much margin: 45 gives 15 minutes for a slow or retried ping.",
+      "default": 45
+    },
+    "autoHandoff": {
+      "type": "boolean",
+      "title": "Auto-handoff",
+      "description": "When the conversation sits idle until 5 minutes before the prompt cache expires, run /agarzon:handoff by itself, with a 1-minute warning. Permission prompts during that turn are declined. Keep-warm, when on, pings first, so this never fires.",
+      "default": false
+    },
+    "contextLimitK": {
+      "type": "number",
+      "title": "Context limit (k tokens)",
+      "description": "At this many thousand tokens of context the band turns red, a handoff button appears and the context-limit sound plays. Yellow from half of it.",
+      "default": 200
+    },
+    "limitOrangePercent": {
+      "type": "number",
+      "title": "5h/7d orange at projected %",
+      "description": "The 5h and 7d usage turns orange when the usage projected at the window reset reaches this percent.",
+      "default": 75
+    },
+    "limitRedPercent": {
+      "type": "number",
+      "title": "5h/7d red at projected %",
+      "description": "The 5h and 7d usage turns red, and shows when it hits 100%, when the usage projected at the window reset reaches this percent.",
+      "default": 90
+    },
+    "turnSoundSeconds": {
+      "type": "number",
+      "title": "Turn-done sound after (seconds)",
+      "description": "Play the turn-done sound only for main-thread turns at least this long.",
+      "default": 30
+    },
+    "soundTurnDone": {
+      "type": "string",
+      "title": "Sound: turn done",
+      "description": "A bundled sound name (glass-003, question-001, drop-001, back-001, error-002, error-005), an absolute path to a .wav file, or empty for silence.",
+      "default": "glass-003"
+    },
+    "soundNeedsYou": {
+      "type": "string",
+      "title": "Sound: needs you",
+      "description": "A bundled sound name (glass-003, question-001, drop-001, back-001, error-002, error-005), an absolute path to a .wav file, or empty for silence.",
+      "default": "question-001"
+    },
+    "soundSubagentDone": {
+      "type": "string",
+      "title": "Sound: subagent finished",
+      "description": "A bundled sound name (glass-003, question-001, drop-001, back-001, error-002, error-005), an absolute path to a .wav file, or empty for silence.",
+      "default": "drop-001"
+    },
+    "soundCacheExpiring": {
+      "type": "string",
+      "title": "Sound: cache expiring",
+      "description": "A bundled sound name (glass-003, question-001, drop-001, back-001, error-002, error-005), an absolute path to a .wav file, or empty for silence.",
+      "default": "back-001"
+    },
+    "soundContextLimit": {
+      "type": "string",
+      "title": "Sound: context limit",
+      "description": "A bundled sound name (glass-003, question-001, drop-001, back-001, error-002, error-005), an absolute path to a .wav file, or empty for silence.",
+      "default": "error-002"
+    },
+    "soundCacheCold": {
+      "type": "string",
+      "title": "Sound: cache cold",
+      "description": "A bundled sound name (glass-003, question-001, drop-001, back-001, error-002, error-005), an absolute path to a .wav file, or empty for silence.",
+      "default": "error-005"
+    }
+  }
 }

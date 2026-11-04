@@ -1,16 +1,17 @@
 import { expect, test } from 'claude-code/testing'
 
-import { BAND, MIN, usage, world } from './world'
+import { ask, BAND, MIN, usage, world } from './world'
 
 for (const [platform, env, player] of [
-  ['WSL', { WSL_DISTRO_NAME: 'Ubuntu' }, 'powershell.exe'],
-  ['macOS', {}, 'afplay'],
+  ['WSL', { WSL_DISTRO_NAME: 'Ubuntu' }, "powershell.exe \\(New-Object Media.SoundPlayer 'C:/"],
+  ['macOS', {}, 'audio sounds/'],
 ] as const) {
   test(`${platform}: warns once at 10m with ${player}, then goes cold`, async ($, on) => {
     const { clock, toasts, chimes } = world(on, env)
 
     await $.session.start({ cwd: '/w', surface: 'terminal', isInteractive: true })
     await $.turn.start({ text: 'hi', turnId: 't1' })
+    await ask($)
     await $.turn.complete({ answer: 'a', durationMs: 1, isAborted: false, turnId: 't1', usage, reason: 'answer' })
 
     await clock.advance(49 * MIN)
@@ -19,7 +20,8 @@ for (const [platform, env, player] of [
     await clock.advance(1 * MIN)
     expect(toasts).toHaveLength(1)
     expect(toasts[0]).toContain('expires in 10m')
-    expect(chimes).toEqual([player])
+    expect(chimes).toHaveLength(1)
+    expect(chimes[0]).toMatch(new RegExp(`^${player}.*back-001\\.wav`))
 
     await clock.advance(5 * MIN)
     expect(toasts).toHaveLength(1)
@@ -27,24 +29,26 @@ for (const [platform, env, player] of [
     await clock.advance(6 * MIN)
     expect(toasts).toHaveLength(2)
     expect(toasts[1]).toContain('~312k tokens')
+    expect(chimes.at(-1)).toContain('error-005')
   })
 }
 
 test('the band counts down on terminal and desktop', async ($, on) => {
   const { clock } = world(on, {})
   await $.session.start({ cwd: '/w', surface: 'terminal', isInteractive: true })
+  await ask($)
   await $.turn.complete({ answer: 'a', durationMs: 1, isAborted: false, turnId: 't1', usage, reason: 'answer' })
 
   for (const surface of ['terminal', 'desktop'] as const) {
     const ui = await $.ui.mount({ plugin: 'agarzon', surface, ...BAND })
-    expect(await ui.find({ type: 'Text', text: /cache 60m/ })).toBeDefined()
+    expect((await ui.find({ type: 'Text', text: /cache 60m/ }))?.props.color).toBe('success')
     await ui.unmount()
   }
 
   await clock.advance(61 * MIN)
   for (const surface of ['terminal', 'desktop'] as const) {
     const ui = await $.ui.mount({ plugin: 'agarzon', surface, ...BAND })
-    expect(await ui.find({ type: 'Text', text: /cache cold/ })).toBeDefined()
+    expect((await ui.find({ type: 'Text', text: /cache cold/ }))?.props.color).toBe('error')
     await ui.unmount()
   }
 })
@@ -52,8 +56,10 @@ test('the band counts down on terminal and desktop', async ($, on) => {
 test('a subagent turn does not restart the hour', async ($, on) => {
   const { clock, toasts } = world(on, {})
   await $.session.start({ cwd: '/w', surface: 'terminal', isInteractive: true })
+  await ask($)
   await $.turn.complete({ answer: 'a', durationMs: 1, isAborted: false, turnId: 't1', usage, reason: 'answer' })
   await clock.advance(45 * MIN)
+  await ask($, { agentId: 'sub' })
   await $.turn.complete({ answer: 'a', durationMs: 1, isAborted: false, turnId: 's1', agentId: 'sub', usage, reason: 'answer' })
   await clock.advance(5 * MIN)
   expect(toasts).toHaveLength(1)
@@ -81,6 +87,7 @@ test('a mounted band redraws when the cache clock moves', async ($, on) => {
 
   await $.session.start({ cwd: '/w', surface: 'terminal', isInteractive: true })
   await $.turn.start({ text: 'hi', turnId: 't1' })
+  await ask($)
   await $.turn.complete({ answer: 'a', durationMs: 1, isAborted: false, turnId: 't1', usage, reason: 'answer' })
 
   const ui = await $.ui.mount({ plugin: 'agarzon', surface: 'terminal', ...BAND })

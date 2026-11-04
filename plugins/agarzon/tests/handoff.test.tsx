@@ -31,31 +31,49 @@ test('refuses a bad name and does nothing', async ($, on) => {
   expect(calls).toEqual([])
 })
 
-test('nudges once when context crosses 60%, and again only after it drops back', async ($, on) => {
-  const { toasts } = world(on, {})
+test('context turns yellow at half the limit and red at 200k, with one toast per crossing', async ($, on) => {
+  const { toasts, chimes } = world(on, {})
   await $.session.start(start)
-  const measure = (percent: number) => $.session.measure({ context: { tokens: percent * 10_000, window: 1_000_000, percent }, rateLimits: [], changed: ['context'] })
+  const measure = (k: number) => $.session.measure({ context: { tokens: k * 1000, window: 1_000_000, percent: k / 10 }, rateLimits: [], changed: ['context'] })
+  const ctx = async () => (await (await $.ui.mount({ plugin: 'agarzon', surface: 'terminal', ...BAND })).find({ type: 'Text', text: /^\d+k$/ }))?.props.color
 
-  await measure(45)
+  await measure(99)
+  expect(await ctx()).toBe('success')
+  await measure(100)
+  expect(await ctx()).toBe('warning')
   expect(toasts).toEqual([])
-  await measure(61)
-  await measure(66)
-  expect(toasts).toHaveLength(1)
-  expect(toasts[0]).toContain('Context at 61%')
 
-  const ui = await $.ui.mount({ plugin: 'agarzon', surface: 'terminal', ...BAND })
-  expect(await ui.find({ type: 'Text', text: /ctx 66% → \/handoff/ })).toBeDefined()
+  await measure(201)
+  await measure(230)
+  expect(await ctx()).toBe('error')
+  const bar = async () => (await (await $.ui.mount({ plugin: 'agarzon', surface: 'terminal', ...BAND })).find({ type: 'Text', text: /^[▓░]+$/ }))?.text
+  expect(await bar()).toBe('▓░░░░░░░')
+  expect(toasts).toEqual(['Context at 201k: time to /agarzon:handoff'])
+  expect(chimes).toEqual(['audio sounds/error-002.wav'])
 
-  await measure(10)
-  await measure(62)
-  expect(toasts).toHaveLength(2)
+  await measure(130)
+  expect(await bar()).toBe('▓░░░░░░░')
+  await measure(800)
+  expect(await bar()).toBe('▓▓▓▓▓▓░░')
+  await measure(130)
+  await measure(205)
+  expect(toasts).toHaveLength(3)
 })
 
-test('the band shows the context nudge even with no cache timer, style or HANDOFF.md', async ($, on) => {
-  const { styles } = world(on, {})
+test('over the limit the band offers a handoff button that submits it; a lower limit applies from the settings', { options: { contextLimitK: 120 } }, async ($, on) => {
+  const { calls, styles } = world(on, {})
   styles.current = null
   await $.session.start(start)
-  await $.session.measure({ context: { tokens: 610_000, window: 1_000_000, percent: 61 }, rateLimits: [], changed: ['context'] })
-  const ui = await $.ui.mount({ plugin: 'agarzon', surface: 'terminal', ...BAND })
-  expect(await ui.find({ type: 'Text', text: /ctx 61% → \/handoff/ })).toBeDefined()
+  await $.session.measure({ context: { tokens: 110_000, window: 1_000_000, percent: 11 }, rateLimits: [], changed: ['context'] })
+  for (const surface of ['terminal', 'desktop'] as const) {
+    const ui = await $.ui.mount({ plugin: 'agarzon', surface, ...BAND })
+    expect(await ui.find({ key: 'handoff' })).toBeUndefined()
+  }
+
+  await $.session.measure({ context: { tokens: 125_000, window: 1_000_000, percent: 12.5 }, rateLimits: [], changed: ['context'] })
+  for (const surface of ['terminal', 'desktop'] as const) {
+    const ui = await $.ui.mount({ plugin: 'agarzon', surface, ...BAND })
+    await ui.press({ key: 'handoff' })
+  }
+  expect(calls).toEqual(['/agarzon:handoff', '/agarzon:handoff'])
 })
