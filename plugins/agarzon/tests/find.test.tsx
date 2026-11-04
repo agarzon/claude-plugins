@@ -127,7 +127,7 @@ test('identical texts map to their own rows in order, and tool hits use the call
   expect(findHits(messages, rows, { text: 'yes', kind: 'all' }, 40).map(hit => hit.rowId)).toEqual(['r3', 'toolu_1', 'r1'])
 })
 
-test('/find opens the tab focused and searches; /clear forgets the search', async ($, on) => {
+for (const reason of ['clear', 'resume'] as const) test(`/find opens the tab focused and searches; ${reason} forgets the search`, async ($, on) => {
   const { panes } = world(on, {})
   transcript(on, MESSAGES)
   on('session.end', (_$, e) => ({ sessionId: e.sessionId }))
@@ -136,6 +136,6 @@ test('/find opens the tab focused and searches; /clear forgets the search', asyn
   await $.command.run({ ...panel, command: 'find' })
   expect(panes.has('find')).toBe(true)
   expect((await labels($))[0]).toBe('you and production?')
-  await $.session.end({ reason: 'clear', sessionId: 's1' } as never)
+  await $.session.end({ reason, sessionId: 's1' } as never)
   expect(await labels($)).toEqual([])
 })

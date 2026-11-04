@@ -169,12 +169,12 @@ export const register: Register = (on, options) => {
   })
 
   on('session.end', async ($, e, next) => {
+    if (e.reason === 'clear' || e.reason === 'resume') await clearFind($)
     if (e.reason === 'clear') {
       await clearCache($)
       await clearContext($)
       await clearSkills($)
       await clearRail($)
-      await clearFind($)
       await clearWarm($)
       await clearAutoHandoff($)
       await clearAgents($)
