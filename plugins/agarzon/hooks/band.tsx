@@ -13,6 +13,7 @@ import { readGit } from './git'
 import { RailRow, readRail } from './rail'
 import { isMuted, toggleAllSounds } from './sounds'
 import { readWarm, toggleWarm } from './warm'
+import { toggleSidebar } from './sidebar'
 import { loadedItems } from './skills'
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -68,12 +69,44 @@ export function installBand(on: On) {
     const git = isOn('git') ? await readGit($) : null
     const elapsed = git?.startedAt == null ? null : sessionTime((await $.clock.now()) - git.startedAt)
     const warm = cache !== null && isOn('keepWarm') ? await readWarm($) : null
-    if (e.props.hasSurvey || ((cache?.min ?? null) === null && current === null && context === null && loaded.length === 0 && limits.length === 0 && models === null && rail === null)) return below
     const { min, busy } = cache ?? { min: null, busy: false }
 
     const { Box, Button, Text } = $.ui.resolve(e)
     const cacheColor = min === null ? 'inactive' : min === 0 ? 'error' : min > 20 ? 'success' : min > 10 ? 'warning' : 'error'
     const cacheText = busy || min === null ? '⧗ cache —' : min === 0 ? '⧗ cache cold' : `⧗ cache ${min}m`
+    const segments: (Segment | null)[] = [
+      cache === null ? null : [cacheText.length + (warm === null ? 0 : 5), [
+        <Text key="cache" color={cacheColor} bold={min === 0 && !busy}>{cacheText}</Text>,
+        warm === null ? null : (
+          <Button key="warm" plain onPress={() => toggleWarm($)}>
+            {warm ? <Text color="success">warm</Text> : <Text dimColor>warm</Text>}
+          </Button>
+        ),
+      ]],
+      models === null ? null : [models.model.length + models.effort.length + 1, [
+        <Button key="model" plain label={models.model} onPress={() => void cycleModel($)} />,
+        <Button key="effort" plain label={models.effort} onPress={() => void cycleEffort($)} />,
+      ]],
+      current === null ? null : [current.length, [<Button key="style" plain label={current} onPress={() => cycleStyle($)} />]],
+      context === null ? null : [`ctx ${context.k}k ${context.bar}`.length + (context.isOverLimit ? HANDOFF_COMMAND.length + 6 : 0), [
+        <Text key="ctx">ctx</Text>,
+        <Text key="ctx-k" color={context.tone}>{context.k}k</Text>,
+        <Text key="ctx-bar" color={context.tone}>{context.bar}</Text>,
+        context.isOverLimit ? <Button key="handoff" label={`/${HANDOFF_COMMAND}`} onPress={() => void runHandoff($)} /> : null,
+      ]],
+      ...limits.map(limit => {
+        const suffix = limitSuffix(limit)
+        return [`${limit.label} ${limit.percent}% ${suffix ?? ''}`.trim().length, [
+          <Text key={limit.label}>{limit.label}</Text>,
+          <Text key={`${limit.label}-pct`} color={limit.tone}>{limit.percent}%</Text>,
+          suffix === null ? null : <Text key={`${limit.label}-at`} dimColor>{suffix}</Text>,
+        ]] as Segment
+      }),
+      skills === null ? null : [`skills ${skills.count} · ${skills.k}k`.length, [skills.isRepeated ? <Text key="skills" color="error">skills {skills.count} · {skills.k}k</Text> : <Text key="skills" dimColor>skills {skills.count} · {skills.k}k</Text>]],
+      sounds === null ? null : [1, [<Button key="sounds-all" plain label="♪" dimColor={sounds.isMuted} onPress={() => toggleAllSounds($)} />]],
+      isOn('sidebar') ? [1, [<Button key="sidebar" plain label="☰" onPress={() => void toggleSidebar($)} />]] : null,
+    ]
+    if (e.props.hasSurvey || (rail === null && git === null && segments.every(segment => segment === null))) return below
 
     return (
       <Box flexDirection="column">
@@ -93,37 +126,7 @@ export function installBand(on: On) {
           </Text>
         )}
         <Box flexDirection="row" overflow="hidden">
-          {fitting(e.props.bodyColumns, [
-            cache === null ? null : [cacheText.length + (warm === null ? 0 : 5), [
-              <Text key="cache" color={cacheColor} bold={min === 0 && !busy}>{cacheText}</Text>,
-              warm === null ? null : (
-                <Button key="warm" plain onPress={() => toggleWarm($)}>
-                  {warm ? <Text color="success">warm</Text> : <Text dimColor>warm</Text>}
-                </Button>
-              ),
-            ]],
-            models === null ? null : [models.model.length + models.effort.length + 1, [
-              <Button key="model" plain label={models.model} onPress={() => void cycleModel($)} />,
-              <Button key="effort" plain label={models.effort} onPress={() => void cycleEffort($)} />,
-            ]],
-            current === null ? null : [current.length, [<Button key="style" plain label={current} onPress={() => cycleStyle($)} />]],
-            context === null ? null : [`ctx ${context.k}k ${context.bar}`.length + (context.isOverLimit ? HANDOFF_COMMAND.length + 6 : 0), [
-              <Text key="ctx">ctx</Text>,
-              <Text key="ctx-k" color={context.tone}>{context.k}k</Text>,
-              <Text key="ctx-bar" color={context.tone}>{context.bar}</Text>,
-              context.isOverLimit ? <Button key="handoff" label={`/${HANDOFF_COMMAND}`} onPress={() => void runHandoff($)} /> : null,
-            ]],
-            ...limits.map(limit => {
-              const suffix = limitSuffix(limit)
-              return [`${limit.label} ${limit.percent}% ${suffix ?? ''}`.trim().length, [
-                <Text key={limit.label}>{limit.label}</Text>,
-                <Text key={`${limit.label}-pct`} color={limit.tone}>{limit.percent}%</Text>,
-                suffix === null ? null : <Text key={`${limit.label}-at`} dimColor>{suffix}</Text>,
-              ]] as Segment
-            }),
-            skills === null ? null : [`skills ${skills.count} · ${skills.k}k`.length, [skills.isRepeated ? <Text key="skills" color="error">skills {skills.count} · {skills.k}k</Text> : <Text key="skills" dimColor>skills {skills.count} · {skills.k}k</Text>]],
-            sounds === null ? null : [1, [<Button key="sounds-all" plain label="♪" dimColor={sounds.isMuted} onPress={() => toggleAllSounds($)} />]],
-          ]).map((segment, i) => (
+          {fitting(e.props.bodyColumns, segments).map((segment, i) => (
             <Box key={`segment-${i}`} flexDirection="row" flexShrink={0} gap={1}>
               {i === 0 ? null : <Text dimColor> │</Text>}
               {segment}

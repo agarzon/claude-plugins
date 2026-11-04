@@ -103,6 +103,10 @@ export async function readWarm($: EngineInterface) {
   return read($, isArmed)
 }
 
+export function readPings($: EngineInterface) {
+  return read($, pings)
+}
+
 export async function clearWarm($: EngineInterface) {
   await update($, isArmed, () => false)
   await update($, stopAt, () => null)

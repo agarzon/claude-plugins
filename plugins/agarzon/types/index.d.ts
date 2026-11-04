@@ -10,6 +10,12 @@ export type RailPrompt = { requestId: string; text: string }
 export type WarmPing = { at: number; cached: number; written: number; isHit: boolean }
 export type GitInfo = { branch: string; isDirty: boolean; ahead: number; behind: number; added: number; removed: number; worktree: string | null }
 export type ReviewInfo = { label: string; tone: 'success' | 'error' | null; ci: string }
+export type GitFile = { path: string; status: string; added: number | null; removed: number | null }
+export type GitScope = 'all' | 'session'
+export type TaskRow = { id: string; stopId: string; kind: 'agent' | 'shell'; label: string; detail: string; status: string; startedAt: number }
+export type RequestLog = { at: number; read: number; written: number; uncached: number }
+export type NamedTokens = { name: string; tokens: number }
+export type ContextView = { total: number; max: number; categories: NamedTokens[]; memory: NamedTokens[]; mcp: NamedTokens[] }
 export type LedgerItem = { folder: string; tokens: number; count: number }
 
 declare module 'claude-code' {
@@ -50,6 +56,14 @@ declare module 'claude-code' {
       version: string | null
       startedAt: number | null
       folder: string | null
+      gitRoot: string | null
+      gitFiles: GitFile[]
+      touched: string[]
+      gitScope: GitScope
+      tasks: TaskRow[]
+      tasksNow: number
+      cacheRequests: RequestLog[]
+      contextView: ContextView | null
       stepEffort: string | null
       modelPending: Pending<string> | null
       effortPending: Pending<EffortLevel> | null

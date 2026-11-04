@@ -42,7 +42,7 @@ test('a git command in Bash refreshes the row; a push asks the forge again', asy
   expect(repo.runs).toEqual([])
   await $.tool.call({ tool: 'Bash', command: 'git commit -m x' })
   expect(repo.runs.some(r => r.startsWith('gh'))).toBe(false)
-  expect(repo.runs.filter(r => r.startsWith('git status'))).toHaveLength(1)
+  expect(repo.runs.filter(r => r.startsWith('git status --porcelain=v2'))).toHaveLength(1)
   await $.tool.call({ tool: 'Bash', command: 'git push' })
   await clock.settle()
   expect(repo.runs.filter(r => r.startsWith('gh pr view'))).toHaveLength(1)

@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, PromptSubmitInput } from 'claude-code'
 
-import type { CacheAlert } from '../types'
+import type { CacheAlert, RequestLog } from '../types'
 import { guardFloorTokens, isOn } from './options'
 import { play } from './sounds'
 
@@ -10,10 +10,12 @@ const leftMin = atom({ plugin: 'agarzon', key: 'cacheLeftMin' } as const, null)
 const alert = atom({ plugin: 'agarzon', key: 'cacheAlert' } as const, 'none' as CacheAlert)
 const isBusy = atom({ plugin: 'agarzon', key: 'isBusy' } as const, false)
 const isGuarded = atom({ plugin: 'agarzon', key: 'cacheGuarded' } as const, false)
+const requests = atom({ plugin: 'agarzon', key: 'cacheRequests' } as const, [] as RequestLog[])
 
 export const TTL_MS = 60 * 60 * 1000
 const WARN_MS = 10 * 60 * 1000
 const TICK_MS = 15 * 1000
+const LOG_SIZE = 12
 
 async function tick($: EngineInterface) {
   const at = await read($, lastAt)
@@ -55,7 +57,17 @@ export async function noteRequest($: EngineInterface, sentAt: number) {
   await tick($)
 }
 
+export async function logRequest($: EngineInterface, at: number, usage: { cache_read_input_tokens: number; cache_creation_input_tokens: number; input_tokens: number }) {
+  const entry = { at, read: usage.cache_read_input_tokens, written: usage.cache_creation_input_tokens, uncached: usage.input_tokens }
+  await update($, requests, log => [...log, entry].slice(-LOG_SIZE))
+}
+
+export function readRequests($: EngineInterface) {
+  return read($, requests)
+}
+
 export async function clearCache($: EngineInterface) {
+  await update($, requests, () => [])
   await update($, lastAt, () => null)
   await update($, leftMin, () => null)
   await update($, alert, () => 'none' as const)
