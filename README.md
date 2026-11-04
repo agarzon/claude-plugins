@@ -126,7 +126,7 @@ prompts ‹ 4 5 6 7 8 9 10 11 [12] › 12/12
   dialog shows it with a read-only preview, and Enter means Cancel. Held: recursive `rm`,
   `git reset --hard`, `git clean -f`, force push, `git branch -D`, migrations, SQL
   `DROP`/`TRUNCATE`, `docker system/volume prune`, and `aws`, `doctl` and `kubectl` deletes,
-  also inside `sudo`, `bash -c` and `ssh`. Subagents' commands are held too; with nobody to
+  also inside `sudo`, `bash -c`, `eval`, `xargs` and `ssh`. Subagents' commands are held too; with nobody to
   answer, the command is refused. It reads the command text only, so it catches mistakes but
   is not a security boundary: a script file or `docker exec` gets past it. Use
   `permissions.deny` for rules that must hold. A command an `ask` rule also matches prompts twice.
