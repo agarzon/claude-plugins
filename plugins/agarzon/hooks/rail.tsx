@@ -9,7 +9,7 @@ const cursor = atom({ plugin: 'agarzon', key: 'railCursor' } as const, null as n
 const PAGE = 9
 const NARROW_COLUMNS = 70
 const PROMPT_KINDS = new Set(['composer', 'bridge', 'sdk'])
-const PROVISIONAL_ID = 'placeholder'
+export const PROVISIONAL_ID = 'placeholder'
 const INTERRUPTED = /^\[Request interrupted by user/
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 

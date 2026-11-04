@@ -2,6 +2,7 @@ import type { EngineInterface, On } from 'claude-code'
 
 import { readRequests, readCache } from './cache'
 import { readBreakdown } from './context'
+import { findTab, setFindText } from './find'
 import { readFiles, readGit, toggleScope } from './git'
 import { hiddenCount } from './listing'
 import { readTasks, stopTask } from './agents'
@@ -11,6 +12,7 @@ import { readSounds, toggleSound } from './sounds'
 import { readPings, readWarm, toggleWarm } from './warm'
 
 export const PANEL_COMMAND = 'panel'
+export const FIND_COMMAND = 'find'
 
 const TABS = [
   { id: 'git', title: 'Git' },
@@ -18,6 +20,7 @@ const TABS = [
   { id: 'agents', title: 'Agents' },
   { id: 'cache', title: 'Cache' },
   { id: 'sounds', title: 'Sounds' },
+  { id: 'find', title: 'Find' },
 ] as const
 const TAB_IDS = new Set<string>(TABS.map(tab => tab.id))
 const OPEN_KEY = 'sidebar-open'
@@ -48,11 +51,20 @@ export async function toggleSidebar($: EngineInterface) {
   await $.store.set(OPEN_KEY, true)
   await openAll($)
   await $.ui.open({ id: 'git', title: 'Git', focus: true })
-  return 'Sidebar opened: Git, Context, Agents, Cache, Sounds.'
+  return 'Sidebar opened: Git, Context, Agents, Cache, Sounds, Find.'
+}
+
+export async function openFind($: EngineInterface, text: string) {
+  if (text.trim()) await setFindText($, text.trim())
+  await $.store.set(OPEN_KEY, true)
+  await openAll($)
+  await $.ui.open({ id: 'find', title: 'Find', focus: true })
+  return text.trim() ? `Find: ${text.trim()}` : 'Find opened.'
 }
 
 export async function startSidebar($: EngineInterface) {
-  await $.command.register({ name: PANEL_COMMAND, description: 'Open or close the agarzon sidebar (Git, Context, Agents, Cache, Sounds)' })
+  await $.command.register({ name: PANEL_COMMAND, description: 'Open or close the agarzon sidebar (Git, Context, Agents, Cache, Sounds, Find)' })
+  await $.command.register({ name: FIND_COMMAND, description: 'Search this session and jump to a message', argumentHint: '[text]' })
   if (isOn('sidebar') && (await $.store.get(OPEN_KEY)) === true) await openAll($)
 }
 
@@ -208,6 +220,7 @@ export function installSidebar(on: On) {
   on('ui.render', { component: 'Pane', requestId: 'agents' }, async ($, e) => agentsTab($, $.ui.resolve(e)))
   on('ui.render', { component: 'Pane', requestId: 'cache' }, async ($, e) => cacheTab($, $.ui.resolve(e)))
   on('ui.render', { component: 'Pane', requestId: 'sounds' }, async ($, e) => soundsTab($, $.ui.resolve(e)))
+  on('ui.render', { component: 'Pane', requestId: 'find' }, async ($, e) => findTab($, $.ui.resolve(e), e.props.bodyColumns))
 
   on('ui.close', async ($, e, next) => {
     const result = await next(e)

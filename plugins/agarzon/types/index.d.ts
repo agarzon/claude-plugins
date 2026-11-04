@@ -17,6 +17,8 @@ export type RequestLog = { at: number; read: number; written: number; uncached: 
 export type NamedTokens = { name: string; tokens: number }
 export type ContextView = { total: number; max: number; categories: NamedTokens[]; memory: NamedTokens[]; mcp: NamedTokens[] }
 export type LedgerItem = { folder: string; tokens: number; count: number }
+export type FindKind = 'all' | 'you' | 'claude' | 'tools'
+export type FindSearch = { text: string; kind: FindKind }
 
 declare module 'claude-code' {
   interface PluginState {
@@ -67,6 +69,7 @@ declare module 'claude-code' {
       stepEffort: string | null
       modelPending: Pending<string> | null
       effortPending: Pending<EffortLevel> | null
+      findSearch: FindSearch
     }
   }
 }
