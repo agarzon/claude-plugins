@@ -55,7 +55,7 @@ Step 2 is not optional — without a version bump nothing propagates.
 
 ## handoff
 
-`HANDOFF.md`, at the repo root and kept out of git through `.git/info/exclude`, is the
+`HANDOFF.md`, at the repo root and kept out of git by the global gitignore in `agarzon/dotfiles`, is the
 to-do list that carries work between sessions. It holds only pending work: each item is
 removed when done and the file is deleted when empty.
 

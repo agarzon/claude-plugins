@@ -31,11 +31,7 @@ Do what was approved and say what was skipped. Nothing destructive runs without 
 
 ## 3. Write HANDOFF.md
 
-Location: the repo's working-tree root (`git rev-parse --show-toplevel`); outside a repo, the session's root. Never commit it. Keep it out of git for this clone only, never via `.gitignore`:
-
-```bash
-x="$(git rev-parse --git-dir)/info/exclude"; grep -qxF HANDOFF.md "$x" || echo HANDOFF.md >> "$x"
-```
+Location: the repo's working-tree root (`git rev-parse --show-toplevel`); outside a repo, the session's root. Never commit it.
 
 Merge with the existing file: drop the items finished in this session, keep the rest, add the new ones. If nothing is left to do, delete the file instead of writing it, and say so.
 
