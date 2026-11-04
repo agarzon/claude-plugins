@@ -77,7 +77,7 @@ above the prompt. Every part has an on/off switch in `/config` → agarzon.
 ```
 prompts ‹ 4 5 6 7 8 9 10 11 [12] › 12/12
 ⎇ feat/x* ↑2 +12 −3 │ MR !5 ✓ │ ~/GIT/app │ v2.1.318 │ 1h15m
-⧗ cache 42m warm │ opus-5.5 medium │ Concise │ ctx 162k ▓▓░░░░░░ │ 5h 31% @16:40 │ 7d 12% @Fri │ skills 2 · 18k │ ♪
+⧗ cache 42m warm │ opus-5.5 medium │ Concise │ ctx 162k ▓▓░░░░░░ │ 5h 31% @16:40 │ 7d 12% @Fri │ skills 2 · 18.0k │ ♪
 ```
 
 - **Prompt rail.** Your last 9 typed prompts. Click a number to scroll the transcript to
