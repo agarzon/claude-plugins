@@ -46,7 +46,8 @@ Step 2 is not optional — without a version bump nothing propagates.
   in Simplified Technical English. `/what <part>` re-explains only that part.
 - **Session mod** (`hooks/`, entry `register.tsx`) — a band above the prompt: prompt rail, git row,
   model/effort/style switches, context, 5h/7d usage, prompt-cache timer, cold-send guard,
-  keep-warm, auto-handoff, sounds, loaded skills. See below.
+  keep-warm, auto-handoff, sounds, loaded skills, and a sidebar (Git, Context, Agents, Cache,
+  Sounds tabs). See below.
 - **claude-mem sync** (hooks + scripts) — keeps [claude-mem](https://github.com/thedotmack/claude-mem)
   memory in step across machines. See below.
 - **`ELI5`** (output style) — small words, short answers, for a fried brain.
@@ -118,6 +119,21 @@ prompts ‹ 4 5 6 7 8 9 10 11 [12] › 12/12
   same run: a typed `/skill`, or any load after `--resume`, re-sends the whole body. The
   guard turns those repeats into a one-line pointer to the first copy, and toasts when a
   skill of 8k tokens or more loads.
+- **Hidden denied skills.** Skills your settings deny with `Skill(...)` in
+  `permissions.deny` are left out of the skill list Claude reads, so they stop costing
+  tokens. They could not run anyway.
+- **Sidebar** (`☰` in the band, or `/panel`). Five tabs beside the transcript; left open,
+  they reopen next session. Docked in fullscreen from 110 columns, inline above the prompt
+  otherwise; drag the edge to resize (Claude Code keeps the width).
+  - **Git**: branch, PR/MR and CI, every uncommitted file with +/−; `●` marks files Claude
+    edited this session, with a `why?` button that asks about the change. `this session`
+    lists only those, committed ones included.
+  - **Context**: what fills the context (as `/context`), loaded skills, memory files, MCP
+    servers, and how many denied skills are hidden.
+  - **Agents**: subagents and background shells, running time, and `stop`.
+  - **Cache**: time left, keep-warm and auto-handoff switches, the last requests' cache
+    reads and writes (a big write is yellow), and keep-warm pings.
+  - **Sounds**: each sound on or off, and mute all.
 
 The mod API is early access and changes between releases; `claude plugin validate`
 reports anything the running build would refuse.

@@ -1,11 +1,12 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface } from 'claude-code'
 
-import type { ContextFill } from '../types'
+import type { ContextFill, ContextView } from '../types'
 import { contextLimitTokens } from './options'
 import { play } from './sounds'
 
 const contextFill = atom({ plugin: 'agarzon', key: 'contextFill' } as const, null as ContextFill | null)
+const contextView = atom({ plugin: 'agarzon', key: 'contextView' } as const, null as ContextView | null)
 
 const BAR_WIDTH = 8
 
@@ -21,8 +22,28 @@ export async function measureContext($: EngineInterface, tokens: number, window:
   await update($, contextFill, () => ({ tokens, window }))
 }
 
+export async function refreshBreakdown($: EngineInterface) {
+  const b = (await $.session.usage({ breakdown: 'summary' })).context.breakdown
+  if (b === undefined) return
+  const servers = new Map<string, number>()
+  for (const tool of b.mcpTools) servers.set(tool.serverName, (servers.get(tool.serverName) ?? 0) + tool.tokens)
+  const view: ContextView = {
+    total: b.totalTokens,
+    max: b.rawMaxTokens,
+    categories: b.categories.filter(c => c.kind === 'used' && c.tokens > 0).map(c => ({ name: c.name, tokens: c.tokens })),
+    memory: b.memoryFiles.map(f => ({ name: f.path, tokens: f.tokens })),
+    mcp: [...servers].map(([name, tokens]) => ({ name, tokens })).sort((x, y) => y.tokens - x.tokens),
+  }
+  await update($, contextView, () => view)
+}
+
+export function readBreakdown($: EngineInterface) {
+  return read($, contextView)
+}
+
 export async function clearContext($: EngineInterface) {
   await update($, contextFill, () => null)
+  await update($, contextView, () => null)
 }
 
 export async function readContext($: EngineInterface) {

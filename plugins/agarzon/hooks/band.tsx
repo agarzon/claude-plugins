@@ -13,6 +13,7 @@ import { readGit } from './git'
 import { RailRow, readRail } from './rail'
 import { isMuted, toggleAllSounds } from './sounds'
 import { readWarm, toggleWarm } from './warm'
+import { toggleSidebar } from './sidebar'
 import { loadedItems } from './skills'
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -68,7 +69,7 @@ export function installBand(on: On) {
     const git = isOn('git') ? await readGit($) : null
     const elapsed = git?.startedAt == null ? null : sessionTime((await $.clock.now()) - git.startedAt)
     const warm = cache !== null && isOn('keepWarm') ? await readWarm($) : null
-    if (e.props.hasSurvey || ((cache?.min ?? null) === null && current === null && context === null && loaded.length === 0 && limits.length === 0 && models === null && rail === null)) return below
+    if (e.props.hasSurvey || ((cache?.min ?? null) === null && current === null && context === null && loaded.length === 0 && limits.length === 0 && models === null && rail === null && git === null && sounds === null)) return below
     const { min, busy } = cache ?? { min: null, busy: false }
 
     const { Box, Button, Text } = $.ui.resolve(e)
@@ -123,6 +124,7 @@ export function installBand(on: On) {
             }),
             skills === null ? null : [`skills ${skills.count} · ${skills.k}k`.length, [skills.isRepeated ? <Text key="skills" color="error">skills {skills.count} · {skills.k}k</Text> : <Text key="skills" dimColor>skills {skills.count} · {skills.k}k</Text>]],
             sounds === null ? null : [1, [<Button key="sounds-all" plain label="♪" dimColor={sounds.isMuted} onPress={() => toggleAllSounds($)} />]],
+            isOn('sidebar') ? [1, [<Button key="sidebar" plain label="☰" onPress={() => void toggleSidebar($)} />]] : null,
           ]).map((segment, i) => (
             <Box key={`segment-${i}`} flexDirection="row" flexShrink={0} gap={1}>
               {i === 0 ? null : <Text dimColor> │</Text>}

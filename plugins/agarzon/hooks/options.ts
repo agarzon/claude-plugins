@@ -25,6 +25,8 @@ const FEATURE_OPTIONS = {
   skillGuard: 'skillGuard',
   soundButton: 'showSoundButton',
   git: 'showGitRow',
+  hideDeniedSkills: 'hideDeniedSkills',
+  sidebar: 'showSidebarButton',
 } as const
 
 export type Feature = keyof typeof FEATURE_OPTIONS

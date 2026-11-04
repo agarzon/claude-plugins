@@ -80,6 +80,15 @@ export async function isMuted($: EngineInterface) {
   return (await read($, muted)).includes(ALL_SOUNDS)
 }
 
+export async function toggleSound($: EngineInterface, name: SoundEvent | typeof ALL_SOUNDS) {
+  await setMuted($, name, !(await read($, muted)).includes(name))
+}
+
+export async function readSounds($: EngineInterface) {
+  const off = await read($, muted)
+  return { isMuted: off.includes(ALL_SOUNDS), events: SOUND_EVENTS.map(event => ({ event, file: soundFile(event), isOn: !off.includes(event) && soundFile(event) !== '' })) }
+}
+
 export async function toggleAllSounds($: EngineInterface) {
   await setMuted($, ALL_SOUNDS, !(await read($, muted)).includes(ALL_SOUNDS))
 }

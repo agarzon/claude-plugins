@@ -1,5 +1,5 @@
 import { mock } from 'claude-code/testing'
-import type { On, RenderElement, TurnStepInput } from 'claude-code'
+import type { AgentInfo, On, RenderElement, TurnStepInput } from 'claude-code'
 import type { Engine } from 'claude-code/testing'
 
 export const MIN = 60_000
@@ -35,7 +35,7 @@ export function world(on: On, env: Record<string, string>, files = new Map<strin
     toasts.push(e.text)
     return { value: undefined }
   })
-  const repo = { status: null as string | null, shortstat: '', dirs: '', remote: null as string | null, review: null as string | null, runs: [] as string[] }
+  const repo = { status: null as string | null, shortstat: '', dirs: '', porcelain: '', numstat: '', remote: null as string | null, review: null as string | null, runs: [] as string[] }
   on('session.cwd', () => ({ value: '/home/me/w' }))
   on('session.version', () => ({ value: { version: '2.1.318' } as never }))
   on('session.repo', () => ({ value: repo.status === null ? null : ({ root: '/home/me/w', remote: repo.remote, internal: false } as never) }))
@@ -43,7 +43,8 @@ export function world(on: On, env: Record<string, string>, files = new Map<strin
     const program = e.argv[0] ?? ''
     if (program === 'git' || program === 'gh' || program === 'glab') {
       repo.runs.push(e.argv.join(' '))
-      const out = program !== 'git' ? repo.review : e.argv[1] === 'status' ? repo.status : e.argv[1] === 'diff' ? repo.shortstat : repo.dirs
+      const isZ = e.argv.includes('-z')
+      const out = program !== 'git' ? repo.review : e.argv[1] === 'status' ? (isZ && repo.status !== null ? repo.porcelain : repo.status) : e.argv[1] === 'diff' ? (isZ ? repo.numstat : repo.shortstat) : repo.dirs
       return { value: out === null ? { ...RAN, exitCode: 128 } : { ...RAN, stdout: out } }
     }
     if (program === 'uname') return { value: { ...RAN, stdout: `${uname}\n` } }
@@ -61,7 +62,8 @@ export function world(on: On, env: Record<string, string>, files = new Map<strin
     chimes.push(`audio ${e.clip.asset ?? ''}`)
     return { value: undefined }
   })
-  on('session.usage', () => ({ value: { startedAt: 0, context: { tokens: 312_000, window: 1_000_000 }, rateLimits: [] } }))
+  const usageNow = { context: { tokens: 312_000, window: 1_000_000 } as Record<string, unknown> }
+  on('session.usage', () => ({ value: { startedAt: 0, context: usageNow.context, rateLimits: [] } as never }))
   on('config.list', () => ({ value: styles.current === null ? [modelRow] : [modelRow, { ...styleRow, value: styles.current }] }))
   on('config.set', (_$, e) => {
     calls.push(`config.set ${e.key}`)
@@ -71,11 +73,29 @@ export function world(on: On, env: Record<string, string>, files = new Map<strin
   on('command.register', (_$, e) => ({ value: { command: e.name } }))
   on('classic.Notification', () => ({}))
   on('classic.SessionStart', () => ({}))
+  const settings = { deny: [] as string[] }
+  on('settings.read', () => ({ value: { permissions: { deny: settings.deny } } }))
+  const panes = new Map<string, string>()
+  on('ui.panes', () => ({ value: [...panes].map(([id, title]) => ({ id, title, isShown: true, isFocused: false, isPlaced: true }) as never) }))
+  on('ui.open', (_$, e) => {
+    panes.set(e.id, e.title ?? e.id)
+    return { value: { isPlaced: true } }
+  })
+  on('ui.close', (_$, e) => {
+    panes.delete(e.id)
+    return { value: undefined }
+  })
   on('ui.render', { component: 'AbovePrompt' }, ($, e) => {
     const { Box } = $.ui.resolve(e)
     return h(Box, {}) as RenderElement
   })
-  on('agent.list', () => ({ value: [{ id: 'a1', description: 'd', type: 'general-purpose', status: 'completed' }] }))
+  const agents: AgentInfo[] = [{ id: 'a1', description: 'd', type: 'general-purpose', status: 'completed' }]
+  on('agent.list', () => ({ value: agents }))
+  on('session.receive', (_$, e) => ({ text: e.text }))
+  on('tool.call', { tool: 'TaskStop' }, (_$, e) => {
+    calls.push(`TaskStop ${e.task_id}`)
+    return { result: {} as never }
+  })
   on('tool.register', (_$, e) => ({ value: { tool: `mcp__agarzon__${e.name}` } }))
   on('session.root', () => ({ value: '/w' }))
   on('fs.exists', (_$, e) => ({ value: files.has(e.path) }))
@@ -100,5 +120,5 @@ export function world(on: On, env: Record<string, string>, files = new Map<strin
   on('session.start', (_$, e) => ({ cwd: e.cwd }))
   on('turn.start', (_$, e) => ({ turnId: e.turnId }))
   on('turn.complete', (_$, e) => ({ text: e.answer, usage: e.usage }))
-  return { clock, toasts, chimes, failing, styles, calls, files, requests, repo }
+  return { clock, toasts, chimes, failing, styles, calls, files, requests, repo, settings, panes, store, agents, usageNow }
 }

@@ -3,7 +3,7 @@ import { expect, test } from 'claude-code/testing'
 import { BAND, world } from './world'
 
 const start = { cwd: '/w', surface: 'terminal', isInteractive: true } as const
-const ALL_OFF = { showPromptRail: false, showModelButtons: false, showUsageLimits: false, showContext: false, showCache: false, showLoadedSkills: false, showSoundButton: false, showGitRow: false }
+const ALL_OFF = { showPromptRail: false, showModelButtons: false, showUsageLimits: false, showContext: false, showCache: false, showLoadedSkills: false, showSoundButton: false, showGitRow: false, showSidebarButton: false }
 
 test('every band feature on by default', async ($, on) => {
   world(on, {})
@@ -43,4 +43,12 @@ test('another mod\'s band stays drawn beneath; a subagent\'s transcript in view 
   const agent = await $.ui.mount({ plugin: 'agarzon', surface: 'terminal', ...BAND, props: { ...BAND.props, view: { agentId: 'a1' } } })
   expect(await agent.find({ type: 'Text', text: 'other band' })).toBeDefined()
   expect(await agent.find({ key: 'model' })).toBeUndefined()
+})
+
+test('with only the git row and ♪ switched on and no output style, the band still draws them', { options: { ...ALL_OFF, showGitRow: true, showSoundButton: true } }, async ($, on) => {
+  const { styles } = world(on, {})
+  styles.current = null
+  await $.session.start(start)
+  const ui = await $.ui.mount({ plugin: 'agarzon', surface: 'terminal', ...BAND })
+  expect(await ui.find({ key: 'sounds-all' })).toBeDefined()
 })

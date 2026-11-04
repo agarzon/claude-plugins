@@ -1,6 +1,6 @@
 {
   "name": "agarzon",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "Personal Claude Code skills and workflow extensions.",
   "author": {
     "name": "Alexander Garzon"
@@ -72,10 +72,22 @@
       "description": "The ♪ in the band: click mutes or unmutes all sounds. Per-sound toggles: /sounds.",
       "default": true
     },
+    "showSidebarButton": {
+      "type": "boolean",
+      "title": "Sidebar button",
+      "description": "A ☰ button in the band (and /panel) that opens the Git, Context, Agents, Cache and Sounds tabs beside the transcript. Left open, they reopen in the next session.",
+      "default": true
+    },
     "skillGuard": {
       "type": "boolean",
       "title": "Skill guard",
       "description": "In the main conversation: a toast when a skill of 8k tokens or more loads, and a second load of a skill still in context (a typed /skill, or any load after --resume, which Claude Code re-sends in full) is replaced by a one-line pointer to the first copy.",
+      "default": true
+    },
+    "hideDeniedSkills": {
+      "type": "boolean",
+      "title": "Hide denied skills",
+      "description": "Skills your settings deny with a Skill(...) rule in permissions.deny are left out of the skill list Claude reads each session, saving its tokens. They could not run anyway.",
       "default": true
     },
     "guardColdSend": {
