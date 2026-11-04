@@ -39,8 +39,15 @@ export function world(on: On, env: Record<string, string>, files = new Map<strin
   on('session.cwd', () => ({ value: '/home/me/w' }))
   on('session.version', () => ({ value: { version: '2.1.318' } as never }))
   on('session.repo', () => ({ value: repo.status === null ? null : ({ root: '/home/me/w', remote: repo.remote, internal: false } as never) }))
+  const previews = new Map<string, string>()
+  const previewRuns: { argv: string; cwd?: string }[] = []
   on('process.run', (_$, e) => {
     const program = e.argv[0] ?? ''
+    const argv = e.argv.join(' ')
+    if (previews.has(argv)) {
+      previewRuns.push({ argv, cwd: e.init?.cwd })
+      return { value: { ...RAN, stdout: previews.get(argv) ?? '' } }
+    }
     if (program === 'git' || program === 'gh' || program === 'glab') {
       repo.runs.push(e.argv.join(' '))
       const isZ = e.argv.includes('-z')
@@ -120,5 +127,5 @@ export function world(on: On, env: Record<string, string>, files = new Map<strin
   on('session.start', (_$, e) => ({ cwd: e.cwd }))
   on('turn.start', (_$, e) => ({ turnId: e.turnId }))
   on('turn.complete', (_$, e) => ({ text: e.answer, usage: e.usage }))
-  return { clock, toasts, chimes, failing, styles, calls, files, requests, repo, settings, panes, store, agents, usageNow }
+  return { clock, toasts, chimes, failing, styles, calls, files, requests, repo, settings, panes, store, agents, usageNow, previews, previewRuns }
 }

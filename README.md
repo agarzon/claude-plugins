@@ -122,6 +122,14 @@ prompts ‹ 4 5 6 7 8 9 10 11 [12] › 12/12
 - **Hidden denied skills.** Skills your settings deny with `Skill(...)` in
   `permissions.deny` are left out of the skill list Claude reads, so they stop costing
   tokens. They could not run anyway.
+- **Risky-command hold.** Before a risky Bash command runs, Claude Code's own question
+  dialog shows it with a read-only preview, and Enter means Cancel. Held: recursive `rm`,
+  `git reset --hard`, `git clean -f`, force push, `git branch -D`, migrations, SQL
+  `DROP`/`TRUNCATE`, `docker system/volume prune`, and `aws`, `doctl` and `kubectl` deletes,
+  also inside `sudo`, `bash -c` and `ssh`. Subagents' commands are held too; with nobody to
+  answer, the command is refused. It reads the command text only, so it catches mistakes but
+  is not a security boundary: a script file or `docker exec` gets past it. Use
+  `permissions.deny` for rules that must hold. A command an `ask` rule also matches prompts twice.
 - **Sidebar** (`☰` in the band, or `/panel`). Five tabs beside the transcript; left open,
   they reopen next session. Docked in fullscreen from 110 columns, inline above the prompt
   otherwise; drag the edge to resize (Claude Code keeps the width).
