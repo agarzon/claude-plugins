@@ -71,7 +71,7 @@ export async function soundsCommand($: EngineInterface, args: string) {
   const off = await read($, muted)
   const rows = SOUND_EVENTS.map(event => {
     const file = soundFile(event)
-    return `${event.padEnd(14)} ${off.includes(event) || file === '' ? 'off' : 'on '}  ${file || '(no file)'}`
+    return `${event.padEnd(14)} ${off.includes(ALL_SOUNDS) || off.includes(event) || file === '' ? 'off' : 'on '}  ${file || '(no file)'}`
   })
   return [`Sounds ${off.includes(ALL_SOUNDS) ? 'muted' : 'on'}.`, ...rows, 'Files: /config → agarzon, a bundled name or an absolute .wav path.'].join('\n')
 }

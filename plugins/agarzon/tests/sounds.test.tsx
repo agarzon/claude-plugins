@@ -114,3 +114,11 @@ test('♪ mutes and unmutes all, the same switch /sounds shows', async ($, on) =
   await $.turn.complete(turn(1_000, 'a1'))
   expect(chimes).toHaveLength(1)
 })
+
+test('/sounds off shows every event off', async ($, on) => {
+  world(on, {})
+  await $.session.start({ cwd: '/w', surface: 'terminal', isInteractive: true })
+  const { text } = await $.command.run(sounds('off'))
+  expect(text).toMatch(/turnDone\s+off/)
+  expect(text).not.toMatch(/\bon\s/)
+})
