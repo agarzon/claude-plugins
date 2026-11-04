@@ -120,5 +120,5 @@ test('/sounds off shows every event off', async ($, on) => {
   await $.session.start({ cwd: '/w', surface: 'terminal', isInteractive: true })
   const { text } = await $.command.run(sounds('off'))
   expect(text).toMatch(/turnDone\s+off/)
-  expect(text).not.toMatch(/\bon \s/)
+  expect(text).not.toMatch(/\bon\s/)
 })
