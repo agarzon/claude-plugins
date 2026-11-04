@@ -1,6 +1,6 @@
 {
   "name": "agarzon",
-  "version": "0.16.1",
+  "version": "0.17.0",
   "description": "Personal Claude Code skills and workflow extensions.",
   "author": {
     "name": "Alexander Garzon"
@@ -179,6 +179,12 @@
       "title": "Sound: cache cold",
       "description": "A bundled sound name (glass-003, question-001, drop-001, back-001, error-002, error-005), an absolute path to a .wav file, or empty for silence.",
       "default": "error-005"
+    },
+    "holdRiskyCommands": {
+      "type": "boolean",
+      "title": "Hold risky commands",
+      "description": "Before a risky Bash command runs (recursive rm, git reset --hard, git clean, force push, git branch -D, migrations, SQL DROP/TRUNCATE, docker prune, cloud deletes), ask with a read-only preview of what it would touch. Catches mistakes; it is not a security boundary.",
+      "default": true
     }
   }
 }

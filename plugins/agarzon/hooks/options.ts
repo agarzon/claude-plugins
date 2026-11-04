@@ -27,6 +27,7 @@ const FEATURE_OPTIONS = {
   git: 'showGitRow',
   hideDeniedSkills: 'hideDeniedSkills',
   sidebar: 'showSidebarButton',
+  holdRisky: 'holdRiskyCommands',
 } as const
 
 export type Feature = keyof typeof FEATURE_OPTIONS

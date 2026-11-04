@@ -3,6 +3,7 @@ import type { EngineInterface, Register } from 'claude-code'
 import { clearAgents, noteShell, noteStopped, noteTaskStatus, watchAgents } from './agents'
 import { AUTO_HANDOFF_DECLINE, clearAutoHandoff, isAutoHandoffRunning, noteHandoffCommand, noteTurnEnd, noteTurnStart, startAutoHandoff } from './autohandoff'
 import { installBand } from './band'
+import { holdRisky } from './blast'
 import { clearCache, completeCache, guardColdSend, logRequest, markBusy, noteRequest, startCache } from './cache'
 import { clearContext, HANDOFF_COMMAND, measureContext, refreshBreakdown } from './context'
 import { loadStyle, noteStyle } from './controls'
@@ -91,6 +92,8 @@ export const register: Register = (on, options) => {
   })
 
   on('tool.call', { tool: 'Bash' }, async ($, e, next) => {
+    const deny = await holdRisky($, e.command)
+    if (deny !== null) return { deny }
     const result = await next(e)
     if (e.agentId === undefined) await afterCommand($, e.command)
     const shell = (result.result as { backgroundTaskId?: string } | undefined)?.backgroundTaskId
