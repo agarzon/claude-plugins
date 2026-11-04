@@ -21,8 +21,11 @@ next session.
 
 1. Drop `plugins/agarzon/skills/<name>/SKILL.md` (or `output-styles/<name>.md`,
    or edit `hooks/hooks.json`, or the mod in
-   `hooks/register.tsx`; check a mod with `claude plugin validate plugins/agarzon`
-   and `claude plugin test plugins/agarzon`).
+   `hooks/`; check a mod with `claude plugin validate plugins/agarzon`
+   and `claude plugin test plugins/agarzon`). The engine allows one hook per
+   event without a matcher, so those `on()` calls all live in `register.tsx`;
+   each feature module declares the atoms it owns, because a `read`/`update`
+   must name an atom declared in the same file.
 2. Bump `version` in `plugins/agarzon/.claude-plugin/plugin.json`.
 3. Commit and push. Machines with `autoUpdate` pull it on the next session.
 
@@ -41,7 +44,7 @@ Step 2 is not optional — without a version bump nothing propagates.
   whole suite green before done.
 - **`what`** (skill, `/what` only) — the last answer did not land: says it again with context,
   in Simplified Technical English. `/what <part>` re-explains only that part.
-- **Session mod** (`hooks/register.tsx`) — prompt-cache countdown and warning, output-style
+- **Session mod** (`hooks/`, entry `register.tsx`) — prompt-cache countdown and warning, output-style
   switcher, context-fill nudge, session rename on handoff, and the list of loaded skills. See below.
 - **claude-mem sync** (hooks + scripts) — keeps [claude-mem](https://github.com/thedotmack/claude-mem)
   memory in step across machines. See below.

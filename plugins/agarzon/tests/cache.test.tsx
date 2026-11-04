@@ -75,3 +75,17 @@ test('the style button cycles the output style', async ($, on) => {
   await ui.press({ key: 'style' })
   expect(styles.current).toBe('default')
 })
+
+test('a mounted band redraws when the cache clock moves', async ($, on) => {
+  const { clock } = world(on, {})
+
+  await $.session.start({ cwd: '/w', surface: 'terminal', isInteractive: true })
+  await $.turn.start({ text: 'hi', turnId: 't1' })
+  await $.turn.complete({ answer: 'a', durationMs: 1, isAborted: false, turnId: 't1', usage, reason: 'answer' })
+
+  const ui = await $.ui.mount({ plugin: 'agarzon', surface: 'terminal', ...BAND })
+  expect(await ui.find({ type: 'Text', text: /cache 60m/ })).toBeDefined()
+  await clock.advance(61 * MIN)
+  expect(await ui.find({ type: 'Text', text: /cache cold/ })).toBeDefined()
+  await ui.unmount()
+})
