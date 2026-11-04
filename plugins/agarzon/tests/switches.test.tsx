@@ -52,3 +52,11 @@ test('with only the git row and ♪ switched on and no output style, the band st
   const ui = await $.ui.mount({ plugin: 'agarzon', surface: 'terminal', ...BAND })
   expect(await ui.find({ key: 'sounds-all' })).toBeDefined()
 })
+
+test('with only ☰ switched on, the band still draws it', { options: { ...ALL_OFF, showSidebarButton: true } }, async ($, on) => {
+  const { styles } = world(on, {})
+  styles.current = null
+  await $.session.start(start)
+  const ui = await $.ui.mount({ plugin: 'agarzon', surface: 'terminal', ...BAND })
+  expect(await ui.find({ key: 'sidebar' })).toBeDefined()
+})
