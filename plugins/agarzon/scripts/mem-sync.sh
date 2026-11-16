@@ -69,6 +69,7 @@ snapshot() {
 case "${1:-}" in
   export)
     snapshot
+    find "$SHARED" -maxdepth 1 -name "$(basename "$MINE").tmp.*" -mmin +10 -delete 2>/dev/null
     SINCE=$(cat "$MARK" 2>/dev/null || echo 0)
     case "$SINCE" in ''|*[!0-9]*) SINCE=0 ;; esac
     NOW=$(date +%s000)
