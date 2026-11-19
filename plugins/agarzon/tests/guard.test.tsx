@@ -23,14 +23,14 @@ async function goCold($: Engine, clock: { advance(ms: number): Promise<unknown> 
   await clock.advance(61 * MIN)
 }
 
-test('cold cache, big context: the first typed prompt is held back with the cost and put back in the box; Enter again sends it', async ($, on) => {
+test('cold cache, big context: the first typed prompt is held back with the cost, left for the engine to put back in the box; Enter again sends it', async ($, on) => {
   const { clock, calls } = world(on, {})
   const filled = drafts(on)
   await goCold($, clock)
 
   const first = await $.prompt.submit(typed)
   expect('drop' in first && first.drop).toContain('~312k tokens')
-  expect(filled).toEqual(['next step'])
+  expect(filled).toEqual([])
   expect(calls.filter(c => c.startsWith('prompt:'))).toEqual([])
 
   const second = await $.prompt.submit(typed)

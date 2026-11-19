@@ -80,7 +80,6 @@ export async function guardColdSend($: EngineInterface, e: PromptSubmitInput) {
   const tokens = (await $.session.usage()).context.tokens ?? 0
   if (tokens < guardFloorTokens()) return null
   await update($, isGuarded, () => true)
-  await $.prompt.fill({ text: e.text, mode: 'replace' })
   return `Prompt cache is cold: this send re-caches ~${Math.round(tokens / 1000)}k tokens. Press Enter again to send it anyway, or /agarzon:handoff first.`
 }
 
