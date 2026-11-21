@@ -38,6 +38,9 @@ Step 2 is not optional — without a version bump nothing propagates.
 - **`challenge`** (skill, `/challenge` only) — questions a plan or decision in rounds until
   every choice is settled, then posts the agreed plan and the decisions worth recording.
   Builds nothing.
+- **`blindspot`** (skill) — before the first change to an unfamiliar or fragile system: read-only
+  sweep for hidden coupling, silent failure and drift, up to 7 blindspots with prompt fixes, then
+  a better prompt. Changes nothing.
 - **`debug`** (skill) — root cause before any fix: reproduce, find the failing layer, one
   hypothesis at a time, stop after 3 failed fixes.
 - **`tdd`** (skill) — test-first: watch it fail for the right reason, least code to pass,
