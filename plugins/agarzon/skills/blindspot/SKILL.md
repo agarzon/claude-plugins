@@ -29,6 +29,6 @@ Up to seven blindspots, most dangerous first. Each one:
 **B1 — <title>**: what you found, and why it matters for this change. Proven (cite `path:line` or the command and its output) or inferred.
 Prompt fix: the sentence to add to the task so it is handled.
 
-Then one **Better prompt**: the original task rewritten with every prompt fix folded in, in a ```text block.
+Then one **Better prompt**: the original task rewritten with every prompt fix folded in, in a fenced `text` code block.
 
 Then stop. Change nothing until the user says go.
