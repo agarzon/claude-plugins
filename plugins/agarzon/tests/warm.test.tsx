@@ -39,6 +39,7 @@ test('/warm pings after 45 min idle, each warm ping restarts the hour, and it st
   expect(sent).toHaveLength(1)
   const ui = await $.ui.mount({ plugin: 'agarzon', surface: 'terminal', ...BAND })
   expect(await ui.find({ type: 'Text', text: /cache 60m/ })).toBeDefined()
+  await ui.unmount()
 
   await clock.advance(44 * MIN)
   expect(sent).toHaveLength(1)
